@@ -35,3 +35,4 @@ typealias CPInformationItem = Row
 typealias CPMapTemplate = NavigationTemplate
 typealias CPRouteChoice = Destination
 typealias CPTrip = Trip
+typealias CPVoiceControlTemplate = MessageTemplate

@@ -7,6 +7,7 @@ import androidx.car.app.ScreenManager
 import androidx.car.app.Session
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -102,6 +103,7 @@ class AndroidAutoSession : Session() {
                 }
             }
         )
+        FCPSpeaker.initializeTTS()
 
         FlutterCarplayPlugin.rootViewController?.let {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)

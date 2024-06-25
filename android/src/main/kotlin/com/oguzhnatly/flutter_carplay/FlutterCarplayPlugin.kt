@@ -1,5 +1,7 @@
 package com.oguzhnatly.flutter_carplay
 
+import com.oguzhnatly.flutter_carplay.managers.audio.FCPSoundEffects
+import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.constraints.ConstraintManager
 import com.oguzhnatly.flutter_carplay.models.action_sheet.FCPActionSheetTemplate
@@ -14,11 +16,13 @@ import com.oguzhnatly.flutter_carplay.models.list.FCPListSection
 import com.oguzhnatly.flutter_carplay.models.list.FCPListTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapButton
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
+import com.oguzhnatly.flutter_carplay.models.voice_control.FCPVoiceControlTemplate
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import java.util.Locale
 
 /**
  * FlutterCarplayPlugin A Kotlin Flutter plugin for Android Auto integration.
@@ -122,6 +126,128 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
                 List(count) { AndroidAutoService.session?.pop() }
 
+                result.success(true)
+            }
+
+            FCPChannelTypes.setVoiceControl.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val rootTemplateArgs = args?.get("rootTemplate") as? Map<String, Any>
+                if (args == null || rootTemplateArgs == null) {
+                    result.success(false)
+                    return
+                }
+
+                val showVoiceTemplate = {
+                    val voiceControlTemplate = FCPVoiceControlTemplate(rootTemplateArgs)
+                    fcpPresentTemplate = voiceControlTemplate
+                    AndroidAutoService.session?.presentTemplate(template = voiceControlTemplate)
+                    FCPStreamHandlerPlugin.sendEvent(
+                        type = FCPChannelTypes.onPresentStateChanged.name,
+                        data = mapOf("completed" to true)
+                    )
+                    result.success(true)
+                }
+
+                if (fcpPresentTemplate != null) {
+                    fcpPresentTemplate = null
+                    AndroidAutoService.session?.closePresent(result)
+                    showVoiceTemplate()
+                } else {
+                    showVoiceTemplate()
+                }
+            }
+
+            FCPChannelTypes.activateVoiceControlState.name -> {
+                if (fcpPresentTemplate == null) {
+                    result.error("ERROR", "To activate a voice control state, a voice control template must be presented to CarPlay Screen at first.", null)
+                    return
+                }
+                val args = call.arguments as? String ?: run {
+                    result.success(false)
+                    return
+                }
+
+                if (fcpPresentTemplate is FCPVoiceControlTemplate) {
+                    (fcpPresentTemplate as FCPVoiceControlTemplate).activateVoiceControlState(args)
+                    result.success(true)
+                } else {
+                    result.success(false)
+                }
+            }
+
+            FCPChannelTypes.getActiveVoiceControlStateIdentifier.name -> {
+                if (fcpPresentTemplate == null) {
+                    result.error("ERROR", "To get the active voice control state identifier, a voice control template must be presented to CarPlay Screen at first.", null)
+                    return
+                }
+
+                if (fcpPresentTemplate is FCPVoiceControlTemplate) {
+                    val identifier = (fcpPresentTemplate as FCPVoiceControlTemplate).getActiveVoiceControlStateIdentifier()
+                    result.success(identifier)
+                } else {
+                    result.success(null)
+                }
+            }
+
+            FCPChannelTypes.startVoiceControl.name -> {
+                if (fcpPresentTemplate == null) {
+                    result.error("ERROR", "To start the voice control, a voice control template must be presented to CarPlay Screen at first.", null)
+                    return
+                }
+                if (fcpPresentTemplate is FCPVoiceControlTemplate) {
+                    (fcpPresentTemplate as FCPVoiceControlTemplate).start()
+                    result.success(true)
+                } else {
+                    result.success(false)
+                }
+            }
+
+            FCPChannelTypes.stopVoiceControl.name -> {
+                if (fcpPresentTemplate == null) {
+                    result.error("ERROR", "To stop the voice control, a voice control template must be presented to CarPlay Screen at first.", null)
+                    return
+                }
+                if (fcpPresentTemplate is FCPVoiceControlTemplate) {
+                    (fcpPresentTemplate as FCPVoiceControlTemplate).stop()
+                    result.success(true)
+                } else {
+                    result.success(false)
+                }
+            }
+
+            FCPChannelTypes.speak.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val text = args?.get("text") as? String
+                val language = args?.get("language") as? String
+                val elementId = args?.get("_elementId") as? String
+                val onCompleted = args?.get("onCompleted") as? Boolean
+
+                if (text == null || language == null || elementId == null || onCompleted == null) {
+                    result.success(false)
+                    return
+                }
+
+                FCPSpeaker.setLanguage(Locale(language))
+                FCPSpeaker.speak(text) {
+                    if (onCompleted) {
+                        FCPStreamHandlerPlugin.sendEvent(FCPChannelTypes.onSpeechCompleted.name, mapOf("elementId" to elementId))
+                    }
+                }
+                result.success(true)
+            }
+
+            FCPChannelTypes.playAudio.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val soundPath = args?.get("soundPath") as? String
+                val volume = args?.get("volume") as? Double
+
+                if (soundPath == null || volume == null) {
+                    result.success(false)
+                    return
+                }
+
+                FCPSoundEffects.shared.prepare(soundPath, volume.toFloat())
+                FCPSoundEffects.shared.play()
                 result.success(true)
             }
 
@@ -446,6 +572,17 @@ private fun FlutterCarplayPlugin.Companion.pushTemplate(
 fun FlutterCarplayPlugin.Companion.onCarplayConnectionChange(status: String) {
     FCPStreamHandlerPlugin.sendEvent(
         FCPChannelTypes.onCarplayConnectionChange.name, mapOf("status" to status)
+    )
+}
+
+/** Sends an event to Flutter with the updated speech recognition transcript.
+ *
+ * @param transcript The updated speech recognition transcript.
+ */
+fun FlutterCarplayPlugin.Companion.sendSpeechRecognitionTranscriptChangeEvent(transcript: String) {
+    FCPStreamHandlerPlugin.sendEvent(
+        type = FCPChannelTypes.onVoiceControlTranscriptChanged.name,
+        data = mapOf("transcript" to transcript)
     )
 }
 
