@@ -94,9 +94,9 @@ class FCPListItem
 
 
     /** Returns the underlying CPListItem instance configured with the specified properties. */
-    fun getTemplate(): CPListItem {
+    fun getTemplate(onClickItem: (() -> Unit)? = null): CPListItem {
 
-        val onClick = {
+        val onClick = onClickItem ?: {
             if (isOnPressListenerActive) {
                 FCPStreamHandlerPlugin.sendEvent(
                     FCPChannelTypes.onFCPListItemSelected.name, mapOf("elementId" to elementId)
