@@ -9,6 +9,7 @@ import androidx.car.app.model.LongMessageTemplate
 import androidx.car.app.model.MessageTemplate
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Row
+import androidx.car.app.model.SearchTemplate
 import androidx.car.app.model.SectionedItemList
 import androidx.car.app.model.Template
 import androidx.car.app.navigation.model.Destination
@@ -36,3 +37,4 @@ typealias CPMapTemplate = NavigationTemplate
 typealias CPRouteChoice = Destination
 typealias CPTrip = Trip
 typealias CPVoiceControlTemplate = MessageTemplate
+typealias CPSearchTemplate = SearchTemplate

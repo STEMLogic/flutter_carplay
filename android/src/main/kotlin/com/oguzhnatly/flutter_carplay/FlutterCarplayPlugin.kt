@@ -16,6 +16,7 @@ import com.oguzhnatly.flutter_carplay.models.list.FCPListSection
 import com.oguzhnatly.flutter_carplay.models.list.FCPListTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapButton
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
+import com.oguzhnatly.flutter_carplay.models.search.FCPSearchTemplate
 import com.oguzhnatly.flutter_carplay.models.voice_control.FCPVoiceControlTemplate
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -320,6 +321,26 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.onFCPListItemSelectedComplete.name -> {}
 
+            FCPChannelTypes.onSearchTextUpdatedComplete.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                val searchResults = (args["searchResults"] as? List<Map<String, Any>>)?.map {
+                    FCPListItem(it)
+                }
+
+                FlutterCarplayPlugin.findSearchTemplate(elementId = elementId) {
+                    if (searchResults != null) {
+                        it.searchPerformed(searchResults)
+                    }
+                }
+                result.success(true)
+            }
+
             FCPChannelTypes.setAlert.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val rootTemplateArgs = args?.get("rootTemplate") as? Map<String, Any>
@@ -545,9 +566,7 @@ private fun FlutterCarplayPlugin.Companion.pushTemplate(
             //
             FCPMapTemplate::class.java.simpleName -> FCPMapTemplate(obj = templateArgs)
             //
-            //        FCPSearchTemplate::class.java.simpleName -> FCPSearchTemplate(
-            //            obj = templateArgs
-            //        )
+            FCPSearchTemplate::class.java.simpleName -> FCPSearchTemplate(obj = templateArgs)
 
             FCPListTemplate::class.java.simpleName -> {
                 FCPListTemplate(obj = templateArgs, templateType = FCPListTemplateTypes.DEFAULT)
@@ -737,6 +756,30 @@ private fun FlutterCarplayPlugin.Companion.updateListItem(
             accessoryDarkImage = args["accessoryDarkImage"] as? String
         )
     }
+}
+
+/**
+ * Finds an Android Auto search template by element ID and performs an action when found.
+ *
+ *   @param elementId The element ID of the search template.
+ *   @param actionWhenFound The action to perform when the search template is found.
+ */
+private fun FlutterCarplayPlugin.Companion.findSearchTemplate(
+    elementId: String,
+    actionWhenFound: (searchTemplate: FCPSearchTemplate) -> Unit
+) {
+    // Filter the template history to include only FCPSearchTemplate instances.
+    val filteredTemplates = fcpTemplateHistory.filter { it is FCPSearchTemplate }
+
+    // Iterate through the templates to find the one with the matching element ID.
+    for (template in filteredTemplates) {
+        if (template != null && template.elementId == elementId) {
+            // Perform the specified action when the template is found.
+            actionWhenFound(template as FCPSearchTemplate)
+            return
+        }
+    }
+    // If no templates are available or found, return early.
 }
 
 /**
