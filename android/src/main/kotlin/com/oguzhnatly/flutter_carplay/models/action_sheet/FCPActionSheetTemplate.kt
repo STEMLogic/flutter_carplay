@@ -1,8 +1,10 @@
 package com.oguzhnatly.flutter_carplay.models.action_sheet
 
 import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.LongMessageTemplate
 import androidx.car.app.model.MessageTemplate
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPActionSheetTemplate
 import com.oguzhnatly.flutter_carplay.CPAlertAction
 import com.oguzhnatly.flutter_carplay.CPAlertActionStyle
@@ -32,7 +34,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     /// An array of FCPAlertAction instances associated with the action sheet template.
     private var objcActions: List<FCPAlertAction>
 
-    private var isLongMessage: Boolean?
+    private var isLongMessage: Bool = false
 
     init {
         val elementIdValue = obj["_elementId"] as? String
@@ -44,12 +46,12 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
             FCPAlertAction(it)
         } ?: emptyList()
         actions = objcActions.map { it.getTemplate() }
-        isLongMessage = obj["isLongMessage"] as? Boolean
+        isLongMessage = obj["isLongMessage"] as Boolean
     }
 
     /** Returns the underlying CPTemplate instance configured with the specified properties. */
     override fun getTemplate(): CPTemplate {
-        return if (isLongMessage == true)
+        return if (isLongMessage)
             longMessageTemplate()
         else
             messageTemplate()
@@ -57,7 +59,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun longMessageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            LongMessageTemplate.Builder(message.toString()).setTitle(title.toString())
+            LongMessageTemplate.Builder(message?:"").setTitle(title?:"")
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
@@ -77,7 +79,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun messageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            MessageTemplate.Builder(message.toString()).setTitle(title.toString())
+            MessageTemplate.Builder(message?:"").setTitle(title?:"").setIcon(CarIcon.ALERT)
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {

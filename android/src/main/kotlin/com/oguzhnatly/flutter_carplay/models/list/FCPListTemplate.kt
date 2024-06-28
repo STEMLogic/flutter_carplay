@@ -8,6 +8,7 @@ import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPBarButton
 import com.oguzhnatly.flutter_carplay.CPListSection
 import com.oguzhnatly.flutter_carplay.CPListTemplate
+import com.oguzhnatly.flutter_carplay.Constants
 import com.oguzhnatly.flutter_carplay.FCPListTemplateTypes
 import com.oguzhnatly.flutter_carplay.FCPRootTemplate
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
@@ -50,7 +51,8 @@ class FCPListTemplate(
     private var showsTabBadge: Bool
 
     /// Indicates whether the list template is loading.
-    private var isLoading: Bool
+    private val isLoading: Bool
+        get() = emptyViewSubtitleVariants.first() == Constants.LOADING
 
     /// The back button associated with the list template (optional).
     private var objcBackButton: FCPBarButton? = null
@@ -75,7 +77,7 @@ class FCPListTemplate(
         emptyViewTitleVariants = obj["emptyViewTitleVariants"] as? List<String> ?: emptyList()
         emptyViewSubtitleVariants = obj["emptyViewSubtitleVariants"] as? List<String> ?: emptyList()
         showsTabBadge = obj["showsTabBadge"] as? Bool ?: false
-        isLoading = obj["isLoading"] as? Bool ?: false
+        //isLoading = obj["isLoading"] as? Bool ?: false
         objcSections =
             (obj["sections"] as? List<Map<String, Any>> ?: emptyList<FCPListSection>()).map {
                 FCPListSection(it as Map<String, Any>)
@@ -102,18 +104,17 @@ class FCPListTemplate(
     override fun getTemplate(): CPListTemplate {
         // Implementation details for returning CPListTemplate instance
         val listTemplate = ListTemplate.Builder().setLoading(isLoading)
-
-        if (sections.count() == 1 && sections.first().header.toCharSequence().isBlank()) {
-            listTemplate.setSingleList(sections.first().itemList)
-        } else if (sections.isEmpty()){
-            listTemplate.setSingleList(
+        when {
+            sections.count() == 1 && sections.first().itemList.items.isEmpty() -> listTemplate.setSingleList(
                 ItemList.Builder()
                     .setNoItemsMessage(if (emptyViewSubtitleVariants.isNotEmpty()) emptyViewSubtitleVariants.first() else "No Items")
                     .build()
             )
-        }
-        else {
-            sections.forEach { listTemplate.addSectionedList(it) }
+
+            sections.count() == 1 && sections.first().header.toCharSequence()
+                .isBlank() -> listTemplate.setSingleList(sections.first().itemList)
+
+            else -> sections.forEach { listTemplate.addSectionedList(it) }
         }
 
         title?.let { listTemplate.setTitle(it) }
@@ -161,7 +162,7 @@ class FCPListTemplate(
         leadingNavigationBarButtons: List<FCPBarButton>? = null,
         trailingNavigationBarButtons: List<FCPBarButton>? = null,
     ) {
-        isLoading?.let { this.isLoading = it }
+        //isLoading?.let { this.isLoading = it }
         emptyViewTitleVariants?.let { this.emptyViewTitleVariants = it }
         emptyViewSubtitleVariants?.let { this.emptyViewSubtitleVariants = it }
         leadingNavigationBarButtons?.let { this.leadingNavigationBarButtons = it }
