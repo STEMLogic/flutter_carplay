@@ -2,6 +2,7 @@ package com.oguzhnatly.flutter_carplay.models.list
 
 import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
+import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPBarButton
@@ -104,7 +105,14 @@ class FCPListTemplate(
 
         if (sections.count() == 1 && sections.first().header.toCharSequence().isBlank()) {
             listTemplate.setSingleList(sections.first().itemList)
-        } else {
+        } else if (sections.isEmpty()){
+            listTemplate.setSingleList(
+                ItemList.Builder()
+                    .setNoItemsMessage(if (emptyViewSubtitleVariants.isNotEmpty()) emptyViewSubtitleVariants.first() else "No Items")
+                    .build()
+            )
+        }
+        else {
             sections.forEach { listTemplate.addSectionedList(it) }
         }
 
