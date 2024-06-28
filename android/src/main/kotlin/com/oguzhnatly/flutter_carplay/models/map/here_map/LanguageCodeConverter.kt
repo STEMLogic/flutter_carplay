@@ -34,8 +34,8 @@ object LanguageCodeConverter {
             initLanguageCodeMap()
         }
 
-        if (languageCodeMap!!.containsKey(languageCode)) {
-            return languageCodeMap!![languageCode]
+        if (languageCodeMap?.containsKey(languageCode) == true) {
+            return languageCodeMap?.get(languageCode)
         }
 
         // Should never happen, unless the languageCodeMap was not updated
@@ -58,14 +58,8 @@ object LanguageCodeConverter {
             val languageEntry = localeEntry.language
             val countryEntry = localeEntry.country
 
-            if (country == null) {
-                if (language == languageEntry) {
-                    return (languageCodeLocaleEntry as Map.Entry<*, *>).key as LanguageCode
-                }
-            } else {
-                if (language == languageEntry && country == countryEntry) {
-                    return (languageCodeLocaleEntry as Map.Entry<*, *>).key as LanguageCode
-                }
+            if (language == languageEntry && country == countryEntry) {
+                return (languageCodeLocaleEntry as Map.Entry<*, *>).key as LanguageCode
             }
         }
 

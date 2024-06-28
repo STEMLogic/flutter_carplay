@@ -129,13 +129,14 @@ class NavigationEventHandler: NavigableLocationDelegate,
     /// - Parameter routeProgress: The current route progress.
     func onRouteProgressUpdated(_ routeProgress: RouteProgress) {
         // [SectionProgress] is guaranteed to be non-empty.
-        let distanceToDestination = routeProgress.sectionProgress.last?.remainingDistanceInMeters ?? Int32(0)
+        let lastSectionProgress = routeProgress.sectionProgress.last
+        let distanceToDestination = lastSectionProgress?.remainingDistanceInMeters ?? Int32(0)
         print("Distance to destination in meters: \(distanceToDestination)")
 
-        let timeToDestination = routeProgress.sectionProgress.last?.remainingDuration ?? TimeInterval()
+        let timeToDestination = lastSectionProgress?.remainingDuration ?? TimeInterval()
         print("Duration to destination: \(timeToDestination)")
 
-        let trafficDelayAhead = routeProgress.sectionProgress.last?.trafficDelay ?? TimeInterval()
+        let trafficDelayAhead = lastSectionProgress?.trafficDelay ?? TimeInterval()
         print("Traffic delay ahead in seconds: \(trafficDelayAhead)")
 
         // Contains the progress for the next maneuver ahead and the next-next maneuvers, if any.
@@ -345,6 +346,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Get measurement from distance in meters.
+    ///
     /// - Parameter distanceInMeters: The distance in meters.
     /// - Returns: The measurement in the appropriate unit.
     func getMeasurement(distanceInMeters: Int32) -> Measurement<UnitLength> {

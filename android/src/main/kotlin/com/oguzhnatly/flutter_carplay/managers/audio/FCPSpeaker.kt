@@ -11,7 +11,6 @@ import java.util.Locale
 
 /** A singleton class responsible for handling text-to-speech functionality in the Flutter CarPlay plugin. */
 object FCPSpeaker : TextToSpeech.OnInitListener {
-
     private var audioManager: AudioManager? = null
 
     /// An optional error description that provides information about any encountered errors during text-to-speech.
@@ -56,7 +55,6 @@ object FCPSpeaker : TextToSpeech.OnInitListener {
 
     override fun onInit(status: Int) {
         if (status == TextToSpeech.SUCCESS) {
-            println("Init TTS successfull")
             tts?.language = locale
         } else {
             errorDescription = "Initialization of TextToSpeech failed."

@@ -19,10 +19,10 @@ import com.here.sdk.mapview.MapMarker
 import com.here.sdk.mapview.MapMeasure
 import com.here.sdk.mapview.MapScheme
 import com.here.sdk.mapview.MapSurface
+import com.here.sdk.routing.Waypoint
 import com.here.time.Duration
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
-import com.oguzhnatly.flutter_carplay.CPTrip
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayTemplateManager
 import com.oguzhnatly.flutter_carplay.Logger
@@ -85,10 +85,8 @@ class FCPMapViewController : SurfaceCallback {
     //            view.isHidden = true
     //        }
     //    }
-    private var surfaceContainer: SurfaceContainer? = null
-
-    private var stableArea: Rect = Rect(0, 0, 0, 0)
-    private var visibleArea: Rect = Rect(0, 0, 0, 0)
+    private var stableArea = Rect(0, 0, 0, 0)
+    private var visibleArea = Rect(0, 0, 0, 0)
 
     /// The app associated with the map view controller.
     var mapController: MapController? = null
@@ -142,16 +140,22 @@ class FCPMapViewController : SurfaceCallback {
     val defaultCoordinates = GeoCoordinates(21.1812352, 72.8629248)
 //    val defaultCoordinates = GeoCoordinates(-25.02970994781628, 134.28333173662492)
 
+
+    private fun isSurfaceReady(surfaceContainer: SurfaceContainer): Bool {
+        return surfaceContainer.surface != null && surfaceContainer.dpi != 0 && surfaceContainer.height != 0 && surfaceContainer.width != 0
+    }
+
     /**
      * Sets the surface of the map view with the provided surface container.
      *
      * @param surfaceContainer the surface container containing the surface, width, and height
      */
     override fun onSurfaceAvailable(surfaceContainer: SurfaceContainer) {
+        if (!isSurfaceReady(surfaceContainer)) return
+
         print("surface available: $surfaceContainer")
 
         mapLoadedOnce = false
-        this.surfaceContainer = surfaceContainer
 
         AndroidAutoService.session?.carContext.let {
             mapView.setSurface(
@@ -205,7 +209,7 @@ class FCPMapViewController : SurfaceCallback {
 
         this.visibleArea = visibleArea
 
-//        updateCameraPrincipalPoint()
+        updateCameraPrincipalPoint()
     }
 
     /**
@@ -744,16 +748,13 @@ fun FCPMapViewController.flyToCoordinates(
  *
  * @param destination The destination waypoint
  */
-fun FCPMapViewController.startNavigation(trip: CPTrip) {
-    //    val wayPoint = Waypoint(
-    //        GeoCoordinates(
-    //            trip.destination.placemark.coordinate.latitude,
-    //            trip.destination.placemark.coordinate.longitude
-    //        )
-    //    )
-    //    mapController?.setDestinationWaypoint(wayPoint)
+fun FCPMapViewController.startNavigation(trip: FCPTrip) {
+    val wayPoint = Waypoint(
+        GeoCoordinates(trip.destination.latitude, trip.destination.longitude)
+    )
+    mapController?.setDestinationWaypoint(wayPoint)
 
-    mapController?.addRouteDeviceLocation()
+    mapController?.addRouteSimulatedLocation()
 
     mapController?.removeMarker(MapMarkerType.INITIAL)
     mapController?.removePolygon(MapMarkerType.INITIAL)

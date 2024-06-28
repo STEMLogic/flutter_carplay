@@ -285,7 +285,7 @@ class NavigationHelper(val mapView: MapSurface) {
     }
 
     /** Provides simulated location updates based on the given route. */
-    private fun enableRoutePlayback(route: Route?) {
+    private fun enableRoutePlayback(route: Route) {
         herePositioningProvider.stopLocating()
         herePositioningSimulator.startLocating(visualNavigator, route)
     }

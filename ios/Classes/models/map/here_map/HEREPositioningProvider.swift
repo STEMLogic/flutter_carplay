@@ -39,7 +39,7 @@ class HEREPositioningProvider: NSObject,
     private var isLocating = false
     private var locationEngineStatus: LocationEngineStatus?
     private var lastKnownLocation: Location?
-    var isLocationEngineStarted: Bool {
+    private var isLocationEngineStarted: Bool {
         return locationEngineStatus == .engineStarted || locationEngineStatus == .alreadyStarted
     }
 
@@ -141,10 +141,9 @@ class HEREPositioningProvider: NSObject,
     }
 
     /// Conforms to the LocationDelegate protocol.
+    ///
     /// - Parameter location: The new location.
     func onLocationUpdated(_ location: heresdk.Location) {
-        print("Location updated: \(location.coordinates)")
-
         let lastCoordinates = lastKnownLocation?.coordinates
         let currentCoordinates = location.coordinates
 

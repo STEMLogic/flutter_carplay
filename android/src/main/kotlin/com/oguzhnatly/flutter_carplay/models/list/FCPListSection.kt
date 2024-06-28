@@ -8,8 +8,7 @@ import androidx.car.app.model.SectionedItemList
  *
  * @param obj A map containing information about the list section.
  */
-class FCPListSection
-    (obj: Map<String, Any>) {
+class FCPListSection(obj: Map<String, Any>) {
 
     /// The underlying CPListSection instance.
     private lateinit var _super: SectionedItemList

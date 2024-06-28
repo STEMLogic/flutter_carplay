@@ -19,8 +19,6 @@
 package com.oguzhnatly.flutter_carplay.models.map.here_map
 
 import android.util.Log
-import com.here.sdk.consent.Consent
-import com.here.sdk.consent.ConsentEngine
 import com.here.sdk.core.Location
 import com.here.sdk.core.LocationListener
 import com.here.sdk.core.errors.InstantiationErrorException
@@ -29,16 +27,24 @@ import com.here.sdk.location.LocationEngine
 import com.here.sdk.location.LocationEngineStatus
 import com.here.sdk.location.LocationFeature
 import com.here.sdk.location.LocationStatusListener
+import com.oguzhnatly.flutter_carplay.Bool
+import kotlin.math.abs
 
 // A reference implementation using HERE Positioning to get notified on location updates
 // from various location sources available from a device and HERE services.
 class HEREPositioningProvider {
     private var locationEngine: LocationEngine? = null
     private var updateListener: LocationListener? = null
+    private var locationEngineStatus: LocationEngineStatus? = null
+    private var lastLocation: Location? = null
+    private val isLocationEngineStarted: Bool
+        get() = locationEngineStatus == LocationEngineStatus.ENGINE_STARTED || locationEngineStatus == LocationEngineStatus.ALREADY_STARTED
+
 
     private val locationStatusListener: LocationStatusListener =
         object : LocationStatusListener {
             override fun onStatusChanged(locationEngineStatus: LocationEngineStatus) {
+                this@HEREPositioningProvider.locationEngineStatus = locationEngineStatus
                 Log.d(LOG_TAG, "Location engine status: " + locationEngineStatus.name)
             }
 
@@ -50,49 +56,74 @@ class HEREPositioningProvider {
         }
 
     init {
-        val consentEngine: ConsentEngine
+//        val consentEngine: ConsentEngine
 
         try {
-            consentEngine = ConsentEngine()
+//            consentEngine = ConsentEngine()
             locationEngine = LocationEngine()
         } catch (e: InstantiationErrorException) {
             throw RuntimeException("Initialization failed: " + e.message)
         }
 
         // Ask user to optionally opt in to HERE's data collection / improvement program.
-        if (consentEngine.userConsentState == Consent.UserReply.NOT_HANDLED) {
-            consentEngine.requestUserConsent()
-        }
+//        if (consentEngine.userConsentState == Consent.UserReply.NOT_HANDLED) {
+//            consentEngine.requestUserConsent()
+//        }
     }
 
     val lastKnownLocation: Location?
-        get() = locationEngine!!.lastKnownLocation
+        get() = locationEngine?.lastKnownLocation
 
     // Does nothing when engine is already running.
     fun startLocating(updateListener: LocationListener?, accuracy: LocationAccuracy?) {
-        if (locationEngine!!.isStarted) {
-            return
-        }
+        if (isLocationEngineStarted) return
 
         this.updateListener = updateListener
 
         // Set listeners to get location updates.
-        locationEngine!!.addLocationListener(updateListener!!)
-        locationEngine!!.addLocationStatusListener(locationStatusListener)
+        locationEngine?.addLocationListener(updateListener!!)
+        locationEngine?.addLocationListener(onLocationUpdated)
+        locationEngine?.addLocationStatusListener(locationStatusListener)
 
-        locationEngine!!.start(accuracy!!)
+        locationEngineStatus = locationEngine?.start(accuracy!!)
     }
 
     // Does nothing when engine is already stopped.
     fun stopLocating() {
-        if (!locationEngine!!.isStarted) {
-            return
-        }
+        if (!isLocationEngineStarted) return
 
         // Remove listeners and stop location engine.
-        locationEngine!!.removeLocationListener(updateListener!!)
-        locationEngine!!.removeLocationStatusListener(locationStatusListener)
-        locationEngine!!.stop()
+        locationEngine?.removeLocationListener(updateListener!!)
+        locationEngine?.removeLocationListener(onLocationUpdated)
+        locationEngine?.removeLocationStatusListener(locationStatusListener)
+        locationEngine?.stop()
+    }
+
+    /**
+     * Conforms to the LocationDelegate protocol.
+     *
+     * @param location The new location.
+     */
+    private val onLocationUpdated = LocationListener { location: Location ->
+        val lastCoordinates = lastLocation?.coordinates
+        val currentCoordinates = location.coordinates
+
+        val lastLatitude = lastCoordinates?.latitude ?: 0.0
+        val currentLatitude = currentCoordinates.latitude
+        val lastLongitude = lastCoordinates?.longitude ?: 0.0
+        val currentLongitude = currentCoordinates.longitude
+
+        val latitudeDifference = abs(lastLatitude - currentLatitude)
+        val longitudeDifference = abs(lastLongitude - currentLongitude)
+
+        // Skip update if the location didn't change significantly.
+        if (latitudeDifference < 0.0001 && longitudeDifference < 0.0001) {
+            return@LocationListener
+        }
+
+        lastLocation = location
+
+        locationUpdatedHandler?.invoke(location)
     }
 
     companion object {

@@ -66,7 +66,6 @@ class HEREPositioningSimulator {
         }
 
         locationSimulator.delegate = locationDelegate
-        // locationSimulator.start()
 
         return locationSimulator
     }

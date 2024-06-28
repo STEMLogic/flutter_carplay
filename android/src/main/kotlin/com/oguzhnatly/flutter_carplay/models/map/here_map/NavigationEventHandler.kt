@@ -19,6 +19,11 @@
 package com.oguzhnatly.flutter_carplay.models.map.here_map
 
 import android.util.Log
+import androidx.car.app.model.DateTimeWithZone
+import androidx.car.app.model.Distance
+import androidx.car.app.navigation.model.RoutingInfo
+import androidx.car.app.navigation.model.Step
+import androidx.car.app.navigation.model.TravelEstimate
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.LanguageCode
 import com.here.sdk.core.UnitSystem
@@ -68,12 +73,21 @@ import com.here.sdk.routing.ManeuverAction
 import com.here.sdk.routing.RoadType
 import com.here.sdk.trafficawarenavigation.DynamicRoutingEngine
 import com.oguzhnatly.flutter_carplay.CPMapTemplate
+import com.oguzhnatly.flutter_carplay.CPNavigationSession
+import com.oguzhnatly.flutter_carplay.CPTravelEstimates
+import com.oguzhnatly.flutter_carplay.FCPChannelTypes
+import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
+import com.oguzhnatly.flutter_carplay.Logger
+import com.oguzhnatly.flutter_carplay.UIImageObject
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
+import com.oguzhnatly.flutter_carplay.snakeToLowerCamelCase
 import java.util.Arrays
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
+import androidx.car.app.navigation.model.Maneuver as CarManeuver
 
 /**
  * This class combines the various events that can be emitted during turn-by-turn navigation.
@@ -98,13 +112,17 @@ class NavigationEventHandler {
     val mapTemplate: CPMapTemplate?
         get() = FlutterCarplayPlugin.rootTemplate as? CPMapTemplate
 
+    /// FCP Map template instance
+    val fcpMapTemplate: FCPMapTemplate?
+        get() = FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate
+
     /// FCP Map View Controller instance
     val fcpMapViewController: FCPMapViewController?
         get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.fcpMapViewController
 
     /// Navigation session instance
-//    val navigationSession: CPNavigationSession?
-//        get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.navigationSession
+    val navigationSession: CPNavigationSession?
+        get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.navigationSession
 
     init {
         // A helper class for TTS.
@@ -134,78 +152,120 @@ class NavigationEventHandler {
 
         // Notifies on the progress along the route including maneuver instructions.
         visualNavigator.routeProgressListener = RouteProgressListener { routeProgress ->
-            val sectionProgressList = routeProgress.sectionProgress
             // sectionProgressList is guaranteed to be non-empty.
-            val lastSectionProgress = sectionProgressList[sectionProgressList.size - 1]
+            val lastSectionProgress = routeProgress.sectionProgress.last()
+            val distanceToDestination = lastSectionProgress.remainingDistanceInMeters
+            val timeToDestination = lastSectionProgress.remainingDuration
+            val trafficDelayAhead = lastSectionProgress.trafficDelay
+
             Log.d(
                 TAG,
                 "Distance to destination in meters: " +
-                        lastSectionProgress.remainingDistanceInMeters
+                        distanceToDestination
             )
             Log.d(
                 TAG,
-                "Traffic delay ahead in seconds: " + lastSectionProgress.trafficDelay.seconds
+                "Traffic delay ahead in seconds: " + trafficDelayAhead.seconds
             )
 
             // Contains the progress for the next maneuver ahead and the next-next maneuvers, if
             // any.
             val nextManeuverList = routeProgress.maneuverProgress
-
-            val nextManeuverProgress = nextManeuverList[0]
-            if (nextManeuverProgress == null) {
-                Log.d(TAG, "No next maneuver available.")
+            val currentManeuverProgress = nextManeuverList.first()
+            if (currentManeuverProgress == null) {
+                Logger.log("No current maneuver available.")
                 return@RouteProgressListener
             }
 
-            val nextManeuverIndex = nextManeuverProgress.maneuverIndex
-            val nextManeuver =
-                visualNavigator.getManeuver(nextManeuverIndex)
-                    ?: // Should never happen as we retrieved the next maneuver progress
-                    // above.
-                    return@RouteProgressListener
+            val currentManeuverIndex = currentManeuverProgress.maneuverIndex
+            // Check if the current maneuver is available in the visualNavigator
+            val currentManeuver = visualNavigator.getManeuver(currentManeuverIndex)
+                ?: // Should never happen as we retrieved the next maneuver progress above.
+                return@RouteProgressListener
 
-            val action = nextManeuver.action
-            val roadName = getRoadName(nextManeuver)
-            val logMessage =
-                action.name +
-                        " on " +
-                        roadName +
-                        " in " +
-                        nextManeuverProgress.remainingDistanceInMeters +
-                        " meters."
+            // Travel estimates for the current maneuver
 
-            // Angle is null for some maneuvers like Depart, Arrive and Roundabout.
-            val turnAngle = nextManeuver.turnAngleInDegrees
-            if (turnAngle != null) {
-                if (turnAngle > 10) {
-                    Log.d(TAG, "At the next maneuver: Make a right turn of $turnAngle degrees.")
-                } else if (turnAngle < -10) {
-                    Log.d(TAG, "At the next maneuver: Make a left turn of $turnAngle degrees.")
-                } else {
-                    Log.d(TAG, "At the next maneuver: Go straight.")
-                }
-            }
+            val initialTravelEstimates =
+                TravelEstimate.Builder(
+                    getMeasurement(currentManeuverProgress.remainingDistanceInMeters),
+                    DateTimeWithZone.create(
+                        System.currentTimeMillis() + currentManeuverProgress.remainingDuration.toMillis(),
+                        TimeZone.getDefault()
+                    )
+                ).build()
 
-            // Angle is null when the roundabout maneuver is not an enter, exit or keep maneuver.
-            val roundaboutAngle = nextManeuver.roundaboutAngleInDegrees
-            if (roundaboutAngle != null) {
-                // Note that the value is negative only for left-driving countries such as UK.
-                Log.d(
-                    TAG,
-                    "At the next maneuver: Follow the roundabout for " +
-                            roundaboutAngle +
-                            " degrees to reach the exit."
+            // Travel estimates for the overall route
+
+            val travelEstimates =
+                TravelEstimate.Builder(
+                    getMeasurement(distanceToDestination),
+                    DateTimeWithZone.create(
+                        System.currentTimeMillis() + timeToDestination.toMillis(),
+                        TimeZone.getDefault()
+                    )
+                ).build()
+
+//            showPrimaryManeuver(
+//                maneuver = currentManeuver,
+//                initialTravelEstimates = initialTravelEstimates,
+//                travelEstimates = travelEstimates
+//            )
+
+            Logger.log(
+                "Before Previous maneuver index: $previousManeuverIndex",
+                "NavigationEventHandler"
+            )
+            Logger.log(
+                "Before Current maneuver index: $currentManeuverIndex",
+                "NavigationEventHandler"
+            )
+            // Check if the current maneuver has changed
+            if (previousManeuverIndex != currentManeuverIndex) {
+                // Log only new maneuvers and ignore changes in distance.
+
+                // Show primary maneuver
+                showPrimaryManeuver(
+                    maneuver = currentManeuver,
+                    initialTravelEstimates = initialTravelEstimates,
+                    travelEstimates = travelEstimates
+                )
+
+            } else {
+                // A maneuver update contains a different distance to reach the next maneuver.
+
+                // Update the estimates for the current maneuver
+                updateEstimates(
+                    initialTravelEstimates = initialTravelEstimates,
+                    travelEstimates = travelEstimates
                 )
             }
 
-            if (previousManeuverIndex != nextManeuverIndex) {
-//                messageView.text = "New maneuver: $logMessage"
-            } else {
-                // A maneuver update contains a different distance to reach the next maneuver.
-//                messageView.text = "Maneuver update: $logMessage"
+            // Check if the next maneuver is available and the distance is less than 500m.
+            if (nextManeuverList.count() > 1 && currentManeuverProgress.remainingDistanceInMeters < 500) {
+                val nextManeuverProgress = nextManeuverList[1]
+
+                val nextManeuverIndex = nextManeuverProgress.maneuverIndex
+                val nextManeuver =
+                    visualNavigator.getManeuver(nextManeuverIndex)
+                        ?: // Should never happen as we retrieved the next maneuver progress
+                        // above.
+                        return@RouteProgressListener
+
+                // Show secondary maneuver
+                showSecondaryManeuver(maneuver = nextManeuver)
             }
 
-            previousManeuverIndex = nextManeuverIndex
+            // Update the previous maneuver index.
+            previousManeuverIndex = currentManeuverIndex
+            Logger.log(
+                "After Previous maneuver index: $previousManeuverIndex",
+                "NavigationEventHandler"
+            )
+            Logger.log(
+                "After Current maneuver index: $currentManeuverIndex",
+                "NavigationEventHandler"
+            )
+
             if (lastMapMatchedLocation != null) {
                 // Update the route based on the current location of the driver.
                 // We periodically want to search for better traffic-optimized routes.
@@ -662,7 +722,10 @@ class NavigationEventHandler {
                     ) {
                         // For example, during night sometimes a school zone warning does not apply.
                         // If schoolZoneWarning.timeRule is null, the warning applies at anytime.
-                        Log.d(TAG, "Note that this school zone warning currently does not apply.")
+                        Log.d(
+                            TAG,
+                            "Note that this school zone warning currently does not apply."
+                        )
                     }
                 } else if (schoolZoneWarning.distanceType == DistanceType.REACHED) {
                     Log.d(TAG, "A school zone has been reached.")
@@ -759,29 +822,30 @@ class NavigationEventHandler {
         // such speed cameras
         // is not provided. Note that danger zones are only available in selected countries, such as
         // France.
-        visualNavigator.dangerZoneWarningListener = DangerZoneWarningListener { dangerZoneWarning ->
-            if (dangerZoneWarning.distanceType == DistanceType.AHEAD) {
-                Log.d(
-                    TAG,
-                    "A danger zone ahead in: " + dangerZoneWarning.distanceInMeters + " meters."
-                )
-                // isZoneStart indicates if we enter the danger zone from the start.
-                // It is false, when the danger zone is entered from a side street.
-                // Based on the route path, the HERE SDK anticipates from where the danger zone will
-                // be entered.
-                // In tracking mode, the most probable path will be used to anticipate from where
-                // the danger zone is entered.
-                Log.d(TAG, "isZoneStart: " + dangerZoneWarning.isZoneStart)
-            } else if (dangerZoneWarning.distanceType == DistanceType.REACHED) {
-                Log.d(
-                    TAG,
-                    "A danger zone has been reached. isZoneStart: " +
-                            dangerZoneWarning.isZoneStart
-                )
-            } else if (dangerZoneWarning.distanceType == DistanceType.PASSED) {
-                Log.d(TAG, "A danger zone has been passed.")
+        visualNavigator.dangerZoneWarningListener =
+            DangerZoneWarningListener { dangerZoneWarning ->
+                if (dangerZoneWarning.distanceType == DistanceType.AHEAD) {
+                    Log.d(
+                        TAG,
+                        "A danger zone ahead in: " + dangerZoneWarning.distanceInMeters + " meters."
+                    )
+                    // isZoneStart indicates if we enter the danger zone from the start.
+                    // It is false, when the danger zone is entered from a side street.
+                    // Based on the route path, the HERE SDK anticipates from where the danger zone will
+                    // be entered.
+                    // In tracking mode, the most probable path will be used to anticipate from where
+                    // the danger zone is entered.
+                    Log.d(TAG, "isZoneStart: " + dangerZoneWarning.isZoneStart)
+                } else if (dangerZoneWarning.distanceType == DistanceType.REACHED) {
+                    Log.d(
+                        TAG,
+                        "A danger zone has been reached. isZoneStart: " +
+                                dangerZoneWarning.isZoneStart
+                    )
+                } else if (dangerZoneWarning.distanceType == DistanceType.PASSED) {
+                    Log.d(TAG, "A danger zone has been passed.")
+                }
             }
-        }
 
         val dangerZoneWarningOptions = DangerZoneWarningOptions()
         // Distance setting for urban, in meters. Defaults to 500 meters.
@@ -872,7 +936,10 @@ class NavigationEventHandler {
                 val paymentMethods = tollBooth.paymentMethods
                 // The supported collection methods like ticket or automatic / electronic.
                 for (collectionMethod in tollCollectionMethods) {
-                    Log.d(TAG, "This toll stop supports collection via: " + collectionMethod.name)
+                    Log.d(
+                        TAG,
+                        "This toll stop supports collection via: " + collectionMethod.name
+                    )
                 }
                 // The supported payment methods like cash or credit card.
                 for (paymentMethod in paymentMethods) {
@@ -880,6 +947,187 @@ class NavigationEventHandler {
                 }
             }
         }
+    }
+
+    /// Show primary maneuver
+    /// - Parameters:
+    ///   - maneuver: maneuver
+    ///   - initialTravelEstimates: initial travel estimates
+    ///   - travelEstimates: travel estimates
+    fun showPrimaryManeuver(
+        maneuver: Maneuver,
+        initialTravelEstimates: CPTravelEstimates,
+        travelEstimates: CPTravelEstimates,
+    ) {
+        Logger.log("showPrimaryManeuver is called", "NavigationEventHandler")
+
+        val action = maneuver.action.name.snakeToLowerCamelCase()
+        val roadName = getRoadName(maneuver)
+        val nextRoadName = maneuver.nextRoadTexts.names.defaultValue ?: ""
+
+        /// Primary maneuver action text handler
+        /// Get the action text for the primary maneuver from the main application.
+        primaryManeuverActionTextHandler = { actionText ->
+            Logger.log("Primary maneuver: $actionText", "NavigationEventHandler")
+
+            // Create CPManeuver instance and set appropriate properties
+            val cpManeuver = RoutingInfo.Builder().setCurrentStep(
+                Step.Builder().setRoad(roadName).setCue(actionText)
+                    .setManeuver(
+                        CarManeuver.Builder(CarManeuver.TYPE_DEPART)
+                            .setIcon(UIImageObject.fromFlutterAsset("assets/icons/carplay/maneuvers/dark/$action.png"))
+                            .build()
+                    ).build(),
+                initialTravelEstimates.remainingDistance!!
+            ).build()
+
+
+//            val cpManeuver = CPManeuver()
+//            cpManeuver.instructionVariants = [actionText]
+//            cpManeuver.initialTravelEstimates = initialTravelEstimates
+//            cpManeuver.dashboardInstructionVariants = [actionText]
+//
+//            val symbolImage = UIImage.dynamicImage(lightImage: "assets/icons/carplay/maneuvers/light/\(action).png",
+//            darkImage: "assets/icons/carplay/maneuvers/dark/\(action).png")
+//            cpManeuver.symbolImage = symbolImage
+//            cpManeuver.dashboardSymbolImage = symbolImage
+//
+//            if #available(iOS 15.4, *) {
+//                cpManeuver.cardBackgroundColor = .systemGreen
+//            }
+
+            // Update the upcoming maneuver
+            // It will change the maneuver in the map template automatically
+            fcpMapTemplate?.update(currentRoutingInfo = cpManeuver)
+//            navigationSession?.updateTrip(Trip.Builder().setCurrentRoad(roadName).build())
+//            navigationSession?.upcomingManeuvers = [cpManeuver]
+
+            // Update the overall route estimates
+//            if val trip = self.navigationSession?.trip {
+//                mapTemplate?.update(travelEstimates, for: trip, with: .green)
+//            }
+        }
+
+        // Send event to get the localized action text for the primary maneuver from main application.
+        FCPStreamHandlerPlugin.sendEvent(
+            type = FCPChannelTypes.onManeuverActionTextRequested.name,
+            data = mapOf(
+                "action" to action,
+                "roadName" to roadName,
+                "nextRoadName" to nextRoadName,
+                "isPrimary" to true,
+            )
+        )
+    }
+
+    /// Show secondary maneuver
+    /// - Parameter maneuver: maneuver
+    fun showSecondaryManeuver(maneuver: Maneuver) {
+        Logger.log("showSecondaryManeuver is called", "NavigationEventHandler")
+
+        val action = maneuver.action.name.snakeToLowerCamelCase()
+        val roadName = getRoadName(maneuver)
+        val nextRoadName = maneuver.nextRoadTexts.names.defaultValue ?: ""
+
+        /// Secondary maneuver action text handler
+        /// Get the action text for the secondary maneuver from the main application.
+        secondaryManeuverActionTextHandler = { actionText ->
+            Logger.log("Secondary maneuver: $actionText", "NavigationEventHandler")
+
+            val maneuverTextArr = maneuver.text.split(" ")
+            val formattedManeuverText = if (maneuverTextArr.count() > 3) maneuverTextArr.take(3)
+                .joinToString(" ") + "..." else maneuver.text
+
+            val cpManeuver = RoutingInfo.Builder()
+                .setCurrentStep(
+                    fcpMapTemplate?.currentRoutingInfo?.currentStep!!,
+                    fcpMapTemplate?.currentRoutingInfo?.currentDistance!!
+                )
+                .setNextStep(
+                    Step.Builder().setRoad(roadName).setCue(maneuver.text)
+                        .setManeuver(
+                            CarManeuver.Builder(CarManeuver.TYPE_DEPART)
+                                .setIcon(UIImageObject.fromFlutterAsset("assets/icons/carplay/maneuvers/dark/$action.png"))
+                                .build()
+                        ).build(),
+                ).build()
+
+//            val cpManeuver = CPManeuver()
+//            cpManeuver.instructionVariants = [actionText, maneuver.text, formattedManeuverText]
+//            cpManeuver.dashboardInstructionVariants =
+//                [actionText, maneuver.text, formattedManeuverText]
+//
+//            val symbolImage =
+//                UIImage.dynamicImage(lightImage: "assets/icons/carplay/maneuvers/light/\(action).png",
+//            darkImage: "assets/icons/carplay/maneuvers/dark/\(action).png")
+//            cpManeuver.symbolImage = symbolImage
+//            cpManeuver.dashboardSymbolImage = symbolImage
+//
+//            if # available(iOS 15.4, *) {
+//                cpManeuver.cardBackgroundColor = . systemGreen
+//            }
+
+            // Update the upcoming maneuver in the map template
+            // It will add the secondary maneuver in the map template automatically
+            fcpMapTemplate?.update(currentRoutingInfo = cpManeuver)
+//            if var upcomingManeuvers = self.navigationSession?.upcomingManeuvers,
+//            upcomingManeuvers.count < 2
+//            {
+//                upcomingManeuvers.append(cpManeuver)
+//                self.navigationSession?.upcomingManeuvers = upcomingManeuvers
+//            }
+        }
+
+        // Send event to get the localized action text for the secondary maneuver from main application.
+        FCPStreamHandlerPlugin.sendEvent(
+            type = FCPChannelTypes.onManeuverActionTextRequested.name,
+            data = mapOf(
+                "action" to action,
+                "roadName" to roadName,
+                "nextRoadName" to nextRoadName,
+                "isPrimary" to false,
+            )
+        )
+    }
+
+    /// Update estimates
+    /// - Parameters:
+    ///   - initialTravelEstimates: initial travel estimates
+    ///   - travelEstimates: travel estimates
+    fun updateEstimates(
+        initialTravelEstimates: CPTravelEstimates,
+        travelEstimates: CPTravelEstimates,
+    ) {
+        val cpManeuver = RoutingInfo.Builder()
+            .setCurrentStep(
+                fcpMapTemplate?.currentRoutingInfo?.currentStep!!,
+                initialTravelEstimates.remainingDistance!!
+            ).build()
+        fcpMapTemplate?.update(currentRoutingInfo = cpManeuver)
+
+//        if val cpManeuver = navigationSession?.upcomingManeuvers.first as? CPManeuver {
+//            navigationSession?.updateEstimates(initialTravelEstimates, for: cpManeuver)
+//        }
+//
+//        if val trip = navigationSession?.trip {
+//            mapTemplate?.update(travelEstimates, for: trip, with:.green)
+//        }
+    }
+
+    /**
+     * Get measurement from distance in meters.
+     *
+     * @param distanceInMeters The distance in meters.
+     * @return The measurement in the appropriate unit.
+     */
+    fun getMeasurement(distanceInMeters: Int): Distance {
+        if (distanceInMeters > 1000) {
+            return Distance.create(
+                distanceInMeters / 1000.0,
+                Distance.UNIT_KILOMETERS
+            )
+        }
+        return Distance.create(distanceInMeters.toDouble(), Distance.UNIT_METERS)
     }
 
     /** Stops the voice assistant. */
@@ -1010,9 +1258,18 @@ class NavigationEventHandler {
         // A weather-dependent speed limit as indicated on the local road signs.
         // The HERE SDK cannot detect the current weather condition, so a driver must decide
         // based on the situation if this speed limit applies.
-        Log.d(TAG, "fogSpeedLimitInMetersPerSecond: " + speedLimit.fogSpeedLimitInMetersPerSecond)
-        Log.d(TAG, "rainSpeedLimitInMetersPerSecond: " + speedLimit.rainSpeedLimitInMetersPerSecond)
-        Log.d(TAG, "snowSpeedLimitInMetersPerSecond: " + speedLimit.snowSpeedLimitInMetersPerSecond)
+        Log.d(
+            TAG,
+            "fogSpeedLimitInMetersPerSecond: " + speedLimit.fogSpeedLimitInMetersPerSecond
+        )
+        Log.d(
+            TAG,
+            "rainSpeedLimitInMetersPerSecond: " + speedLimit.rainSpeedLimitInMetersPerSecond
+        )
+        Log.d(
+            TAG,
+            "snowSpeedLimitInMetersPerSecond: " + speedLimit.snowSpeedLimitInMetersPerSecond
+        )
 
         // For convenience, this returns the effective (lowest) speed limit between
         // - speedLimitInMetersPerSecond
@@ -1072,7 +1329,10 @@ class NavigationEventHandler {
         Log.d(TAG, "laneDirectionCategory.quiteLeft: " + laneDirectionCategory.quiteLeft)
         Log.d(TAG, "laneDirectionCategory.hardLeft: " + laneDirectionCategory.hardLeft)
         Log.d(TAG, "laneDirectionCategory.uTurnLeft: " + laneDirectionCategory.uTurnLeft)
-        Log.d(TAG, "laneDirectionCategory.slightlyRight: " + laneDirectionCategory.slightlyRight)
+        Log.d(
+            TAG,
+            "laneDirectionCategory.slightlyRight: " + laneDirectionCategory.slightlyRight
+        )
         Log.d(TAG, "laneDirectionCategory.quiteRight: " + laneDirectionCategory.quiteRight)
         Log.d(TAG, "laneDirectionCategory.hardRight: " + laneDirectionCategory.hardRight)
         Log.d(TAG, "laneDirectionCategory.uTurnRight: " + laneDirectionCategory.uTurnRight)
@@ -1095,7 +1355,10 @@ class NavigationEventHandler {
         Log.d(TAG, "Trucks are allowed on this lane: " + laneAccess.trucks)
         Log.d(TAG, "ThroughTraffic is allowed on this lane: " + laneAccess.throughTraffic)
         Log.d(TAG, "DeliveryVehicles are allowed on this lane: " + laneAccess.deliveryVehicles)
-        Log.d(TAG, "EmergencyVehicles are allowed on this lane: " + laneAccess.emergencyVehicles)
+        Log.d(
+            TAG,
+            "EmergencyVehicles are allowed on this lane: " + laneAccess.emergencyVehicles
+        )
         Log.d(TAG, "Motorcycles are allowed on this lane: " + laneAccess.motorcycles)
     }
 

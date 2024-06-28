@@ -18,7 +18,9 @@
  */
 package com.oguzhnatly.flutter_carplay.models.map.here_map
 
-import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import androidx.car.app.model.DateTimeWithZone
+import androidx.car.app.navigation.model.TravelEstimate
 import com.here.sdk.core.Color
 import com.here.sdk.core.GeoCircle
 import com.here.sdk.core.GeoCoordinates
@@ -48,7 +50,10 @@ import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.Logger
 import com.oguzhnatly.flutter_carplay.MapMarkerType
 import com.oguzhnatly.flutter_carplay.UIImage
+import java.io.ByteArrayOutputStream
 import java.util.Locale
+import java.util.TimeZone
+
 
 object ConstantsEnum {
     val DEFAULT_MAP_CENTER = GeoCoordinates(52.520798, 13.409408)
@@ -70,7 +75,6 @@ class MapController(private val mapView: MapSurface) {
     private var destinationWaypoint: Waypoint? = null
     private var setLongpressDestination = false
     private var routeCalculator: RouteCalculator
-//    private var isCameraTrackingEnabled = true
 
     /// NavigationHelper instance
     val navigationHelper: NavigationHelper
@@ -84,10 +88,9 @@ class MapController(private val mapView: MapSurface) {
             MapMeasure(MapMeasure.Kind.DISTANCE, ConstantsEnum.DEFAULT_DISTANCE_IN_METERS)
         this.mapView.camera.lookAt(ConstantsEnum.DEFAULT_MAP_CENTER, distanceInMeters)
 
-        routeCalculator =
-            RouteCalculator(
-                SDKNativeEngine.getSharedInstance()?.isOfflineMode ?: false
-            )
+        routeCalculator = RouteCalculator(
+            SDKNativeEngine.getSharedInstance()?.isOfflineMode ?: false
+        )
 
         navigationHelper = NavigationHelper(mapView)
         navigationHelper.startLocationProvider()
@@ -135,7 +138,6 @@ class MapController(private val mapView: MapSurface) {
         }
 
         setLongPressGestureHandler()
-
     }
 
     /** Set destination waypoint for route calculation. */
@@ -169,7 +171,6 @@ class MapController(private val mapView: MapSurface) {
      * @param markerSize The size of the marker
      * @param metadata The metadata of the marker
      */
-    @SuppressLint("RestrictedApi")
     fun addMapMarker(
         coordinates: GeoCoordinates,
         markerImage: UIImage,
@@ -185,7 +186,11 @@ class MapController(private val mapView: MapSurface) {
             mapView.mapScene.removeMapMarker(marker)
             mapView.mapScene.addMapMarker(marker)
         } else {
-            val imageData = markerImage.icon?.mData ?: return
+            val bitmap = markerImage.icon?.bitmap ?: return
+            val stream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            val imageData = stream.toByteArray()
+            bitmap.recycle()
             val mapImage = MapImage(
                 imageData,
                 ImageFormat.PNG,
@@ -240,7 +245,9 @@ class MapController(private val mapView: MapSurface) {
         routeCalculator.calculateRoute(startWaypoint, destinationWaypoint) { routingError, routes ->
             if (routingError == null) {
                 // When routingError is null, routes is guaranteed to contain at least one route.
-                showRouteDetails(routes!!.first())
+                val route = routes!!.first()
+                showRouteDetails(route)
+                navigationHelper.startNavigation(route = route, isSimulated = isSimulated)
             } else {
                 onNavigationFailed(
                     title = "Error while calculating a route:",
@@ -287,21 +294,35 @@ class MapController(private val mapView: MapSurface) {
      * @param route The route.
      */
     private fun showRouteDetails(route: Route) {
-        val estimatedTravelTimeInSeconds: Long = route.duration.seconds
+        val maneuver = route.sections.first().maneuvers.first() ?: return
+        val estimatedTravelTimeInMillis: Long = route.duration.toMillis()
         val lengthInMeters: Int = route.lengthInMeters
 
-        val routeDetails =
-            ("Travel Time: " +
-                    formatTime(estimatedTravelTimeInSeconds) +
-                    ", Length: " +
-                    formatLength(lengthInMeters))
+        val navigationEventHandler = navigationHelper.navigationEventHandler
 
-//        showStartNavigationDialog(
-//            "Route Details",
-//            routeDetails,
-//            route,
-//            isSimulated
-//        )
+        val initialTravelEstimates =
+            TravelEstimate.Builder(
+                navigationEventHandler.getMeasurement(maneuver.lengthInMeters),
+                DateTimeWithZone.create(
+                    System.currentTimeMillis() + maneuver.duration.toMillis(),
+                    TimeZone.getDefault()
+                )
+            ).build()
+
+        val travelEstimates =
+            TravelEstimate.Builder(
+                navigationEventHandler.getMeasurement(lengthInMeters),
+                DateTimeWithZone.create(
+                    System.currentTimeMillis() + estimatedTravelTimeInMillis,
+                    TimeZone.getDefault()
+                )
+            ).build()
+
+        navigationEventHandler.showPrimaryManeuver(
+            maneuver = maneuver,
+            initialTravelEstimates = initialTravelEstimates,
+            travelEstimates = travelEstimates
+        )
     }
 
     /**
