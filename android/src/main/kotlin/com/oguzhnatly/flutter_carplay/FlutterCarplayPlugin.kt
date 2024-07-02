@@ -497,8 +497,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.showBanner.name,
-            -> {
+            FCPChannelTypes.showBanner.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
                 val message = args?.get("message") as? String
@@ -518,8 +517,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.hideBanner.name,
-            -> {
+            FCPChannelTypes.hideBanner.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -535,8 +533,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.showToast.name,
-            -> {
+            FCPChannelTypes.showToast.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
                 val message = args?.get("message") as? String
@@ -556,8 +553,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.showOverlay.name,
-            -> {
+            FCPChannelTypes.showOverlay.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -582,8 +578,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.hideOverlay.name,
-            -> {
+            FCPChannelTypes.hideOverlay.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -600,8 +595,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.showPanningInterface.name,
-            -> {
+            FCPChannelTypes.showPanningInterface.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -617,8 +611,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.dismissPanningInterface.name,
-            -> {
+            FCPChannelTypes.dismissPanningInterface.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -634,8 +627,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.zoomInMapView.name,
-            -> {
+            FCPChannelTypes.zoomInMapView.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -652,8 +644,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.zoomOutMapView.name,
-            -> {
+            FCPChannelTypes.zoomOutMapView.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -670,8 +661,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.startNavigation.name,
-            -> {
+            FCPChannelTypes.startNavigation.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
                 val trip = args?.get("trip") as? Map<String, Any>
@@ -689,8 +679,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.stopNavigation.name,
-            -> {
+            FCPChannelTypes.stopNavigation.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val elementId = args?.get("_elementId") as? String
 
@@ -706,8 +695,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(template != null)
             }
 
-            FCPChannelTypes.onManeuverActionTextRequestComplete.name,
-            -> {
+            FCPChannelTypes.onManeuverActionTextRequestComplete.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val text = args?.get("actionText") as? String
                 val isPrimary = args?.get("isPrimary") as? Bool
@@ -723,8 +711,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(true)
             }
 
-            FCPChannelTypes.toggleOfflineMode.name,
-            -> {
+            FCPChannelTypes.toggleOfflineMode.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val isOffline = args?.get("isOffline") as? Bool
 
@@ -738,8 +725,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(true)
             }
 
-            FCPChannelTypes.toggleVoiceInstructions.name,
-            -> {
+            FCPChannelTypes.toggleVoiceInstructions.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val isMuted = args?.get("isMuted") as? Bool
 
@@ -753,8 +739,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(true)
             }
 
-            FCPChannelTypes.toggleSatelliteView.name,
-            -> {
+            FCPChannelTypes.toggleSatelliteView.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val showSatelliteView = args?.get("showSatelliteView") as? Bool
 
@@ -768,8 +753,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(true)
             }
 
-            FCPChannelTypes.recenterMapView.name,
-            -> {
+            FCPChannelTypes.recenterMapView.name -> {
                 val args = call.arguments as? Map<String, Any>
                 val recenterMapPosition = args?.get("recenterMapPosition") as? String
 
@@ -783,8 +767,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 result.success(true)
             }
 
-            FCPChannelTypes.updateMapCoordinates.name,
-            -> {
+            FCPChannelTypes.updateMapCoordinates.name -> {
                 val args = call.arguments as? Map<String, Any>
 
                 if (args == null) {

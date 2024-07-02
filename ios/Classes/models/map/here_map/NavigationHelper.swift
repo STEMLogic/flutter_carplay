@@ -270,7 +270,7 @@ class NavigationHelper: DynamicRoutingDelegate {
     }
 
     /// Set the normalized principal point of the VisualNavigator camera.
-    /// 
+    ///
     /// - Parameter normalizedPrincipalPoint: The normalized principal point to set.
     func setVisualNavigatorCameraPoint(normalizedPrincipalPoint: heresdk.Anchor2D) {
         visualNavigatorCameraPoint = normalizedPrincipalPoint

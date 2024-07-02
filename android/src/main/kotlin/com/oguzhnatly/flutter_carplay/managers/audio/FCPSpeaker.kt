@@ -104,7 +104,7 @@ object FCPSpeaker : TextToSpeech.OnInitListener {
      * @param text The text to be spoken.
      * @param didEnd: A closure to be executed when speech synthesis is completed or canceled.
      */
-    fun speak(text: String, didEnd: () -> Unit) {
+    fun speak(text: String, didEnd: () -> Unit = {}) {
         willEnd = didEnd
         tts?.language = locale
         tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, text.hashCode().toString())

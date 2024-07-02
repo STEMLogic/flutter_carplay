@@ -1,22 +1,21 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
 import androidx.car.app.AppManager
-import androidx.car.app.OnDoneCallback
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
-import androidx.car.app.model.CarColor
 import androidx.car.app.navigation.NavigationManager
 import androidx.car.app.navigation.NavigationManagerCallback
 import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.car.app.navigation.model.RoutingInfo
-import androidx.car.app.serialization.Bundleable
+import androidx.car.app.navigation.model.TravelEstimate
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPMapTemplate
 import com.oguzhnatly.flutter_carplay.CPNavigationSession
-import com.oguzhnatly.flutter_carplay.CPTrip
+import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPRootTemplate
+import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
 
 /**
@@ -67,10 +66,10 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         get() = viewController as? FCPMapViewController
 
     /// The routing information associated with the map template.
-    var currentRoutingInfo: RoutingInfo? = null
+    var routingInfo: RoutingInfo? = null
 
-    /// The trip associated with the map template.
-    var currentTrip: CPTrip? = null
+    /// The current destination travel estimates associated with the map template.
+    private var destinationTravelEstimates: TravelEstimate? = null
 
     init {
         val elementIdValue = obj["_elementId"] as? String
@@ -126,6 +125,10 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
              */
             override fun onStopNavigation() {
                 stopNavigation()
+                FCPStreamHandlerPlugin.sendEvent(
+                    type = FCPChannelTypes.onNavigationCompletedFromCarplay.name,
+                    data = mapOf()
+                )
             }
         })
     }
@@ -140,6 +143,9 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         val mapTemplate = NavigationTemplate.Builder().setBackgroundColor(CarColor.GREEN)
 
         currentRoutingInfo?.let { mapTemplate.setNavigationInfo(it) }
+        destinationTravelEstimates?.let {
+            mapTemplate.setDestinationTravelEstimate(it)
+        }
 
         if (mapButtons.isNotEmpty()) {
             val actionStrip = ActionStrip.Builder()
@@ -176,7 +182,11 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
      * @param mapButtons The new array of map buttons.
      * @param leadingNavigationBarButtons The new array of leading navigation bar buttons.
      * @param trailingNavigationBarButtons The new array of trailing navigation bar buttons.
-     * @param currentRoutingInfo The new routing information.
+     * @param destinationTravelEstimates The new destination travel estimates.
+     * @param routingInfo The new routing information.
+     * @param removeRoutingInfo A boolean value indicating whether the routing information should
+     * be removed.
+     *
      */
     fun update(
         title: String? = null,
@@ -186,7 +196,8 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         mapButtons: List<FCPMapButton>? = null,
         leadingNavigationBarButtons: List<FCPBarButton>? = null,
         trailingNavigationBarButtons: List<FCPBarButton>? = null,
-        currentRoutingInfo: RoutingInfo? = null,
+        destinationTravelEstimates: TravelEstimate? = null,
+        routingInfo: RoutingInfo? = null,
         removeRoutingInfo: Bool = false,
     ) {
         title?.let { this.title = it }
@@ -196,10 +207,13 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         mapButtons?.let { this.mapButtons = it }
         leadingNavigationBarButtons?.let { this.leadingNavigationBarButtons = it }
         trailingNavigationBarButtons?.let { this.trailingNavigationBarButtons = it }
+
         if (removeRoutingInfo) {
-            this.currentRoutingInfo = null
+            this.routingInfo = null
+            this.destinationTravelEstimates = null
         } else {
-            currentRoutingInfo?.let { this.currentRoutingInfo = it }
+            routingInfo?.let { this.routingInfo = it }
+            destinationTravelEstimates?.let { this.destinationTravelEstimates = it }
         }
 
         onInvalidate()
@@ -219,7 +233,7 @@ fun FCPMapTemplate.showTripPreviews(
     //    textConfiguration: FCPTripPreviewTextConfiguration?,
 ) {
     val cpTrips = trips.map { it.getTemplate() }
-    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
+//    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
     //    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
     //    textConfiguration: textConfiguration?.get)
 }
@@ -234,109 +248,35 @@ fun FCPMapTemplate.hideTripPreviews() {
  * @param trip The trip to start navigation
  */
 fun FCPMapTemplate.startNavigation(trip: FCPTrip) {
-    //    if (navigationSession != null) {
-    //        navigationSession?.navigationEnded()
-    //        navigationSession = null
-    //    }
+    navigationSession?.navigationEnded()
 
     hideTripPreviews()
-    //    navigationSession = _super?.startNavigationSession(for: trip)
-
-    //    if # available(iOS 15.4, *) {
-    //        navigationSession?.pauseTrip(for:.loading, description: "", turnCardColor:
-    // .systemGreen)
-    //    } else {
-    //        navigationSession?.pauseTrip(for:.loading, description: "")
-    //    }
 
     fcpMapViewController?.startNavigation(trip)
     navigationSession?.navigationStarted()
-    navigationSession?.updateTrip(currentTrip ?: trip.getTemplate())
+    update(routingInfo = RoutingInfo.Builder().setLoading(true).build())
 }
 
 /** Stops the navigation. */
 fun FCPMapTemplate.stopNavigation() {
     navigationSession?.navigationEnded()
-    //    navigationSession = null
 
     fcpMapViewController?.stopNavigation()
     update(removeRoutingInfo = true)
-    currentTrip = null
 }
 
-/**
- * Pans the camera in the specified direction
- *
- * @param animated A boolean value indicating whether the transition should be animated
- */
+/** Pans the camera in the specified direction. */
 fun FCPMapTemplate.showPanningInterface() {
     isPanningInterfaceVisible = true
-    _super.panModeDelegate?.sendPanModeChanged(true, object : OnDoneCallback {
-        override fun onSuccess(response: Bundleable?) {
-            print("pan mode enable success: $response")
-        }
 
-        override fun onFailure(response: Bundleable) {
-            print("pan mode enable failed: $response")
-        }
-    })
+//    fcpMapViewController?.hideSubviews()
+    fcpMapViewController?.mapController?.navigationHelper?.stopCameraTracking()
 }
 
-/**
- * Dismisses the panning interface
- *
- * @param animated A boolean value indicating whether the transition should be animated
- */
+/** Dismisses the panning interface. */
 fun FCPMapTemplate.dismissPanningInterface() {
     isPanningInterfaceVisible = false
-    _super.panModeDelegate?.sendPanModeChanged(false, object : OnDoneCallback {
-        override fun onSuccess(response: Bundleable?) {
-            print("pan mode enable success: $response")
-        }
 
-        override fun onFailure(response: Bundleable) {
-            print("pan mode enable failed: $response")
-        }
-    })
+//    fcpMapViewController?.showSubviews()
+    fcpMapViewController?.mapController?.navigationHelper?.startCameraTracking()
 }
-
-// extension FCPMapTemplate: CPMapTemplateDelegate {
-//    /// Called when the map template has started a trip
-//    /// - Parameter
-//    ///   - mapTemplate: The map template
-//    ///   - trip: The trip that was started
-//    ///   - routeChoice: The route choice
-//    func mapTemplate (_: CPMapTemplate, startedTrip trip: CPTrip, using _: CPRouteChoice) {
-//        let originCoordinate = trip . origin . placemark . coordinate
-//                let destinationCoordinate = trip . destination . placemark . coordinate
-//
-//                DispatchQueue.main.async {
-//                    FCPStreamHandlerPlugin.sendEvent(type: FCPChannelTypes.
-// onNavigationStartedFromCarplay, data: ["sourceLatitude": originCoordinate.latitude,
-// "sourceLongitude": originCoordinate.longitude, "destinationLatitude":
-// destinationCoordinate.latitude, "destinationLongitude": destinationCoordinate.longitude])
-//                }
-//    }
-//
-//    /// Called when the panning interface is shown
-//    /// - Parameter mapTemplate: The map template
-//    func mapTemplateDidShowPanningInterface (_: CPMapTemplate) {
-//        fcpMapViewController?.hideSubviews()
-//        fcpMapViewController?.mapController?.navigationHelper.stopCameraTracking()
-//    }
-//
-//    /// Called when the panning interface is dismissed
-//    /// - Parameter mapTemplate: The map template
-//    func mapTemplateDidDismissPanningInterface (_: CPMapTemplate) {
-//        fcpMapViewController?.showSubviews()
-//        fcpMapViewController?.mapController?.navigationHelper.startCameraTracking()
-//    }
-//
-//    /// Called when the map template is panning
-//    /// - Parameters:
-//    ///   - maptemplate: The map template
-//    ///   - direction: The direction of the panning
-//    func mapTemplate (_: CPMapTemplate, panWith direction: CPMapTemplate.PanDirection) {
-//        fcpMapViewController?.panInDirection(direction)
-//    }
-// }

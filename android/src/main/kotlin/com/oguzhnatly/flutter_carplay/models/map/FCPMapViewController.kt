@@ -102,13 +102,13 @@ class FCPMapViewController : SurfaceCallback {
         get() = 40 * (mapView?.pixelScale ?: 1.0)
 
     /// Recenter map position to adjust the map camera
-    var recenterMapPosition = "initialMarker"
+    private var recenterMapPosition = "initialMarker"
 
     /// Map coordinates to render marker on the map
     var mapCoordinates = MapCoordinates()
 
     /// Whether the satellite view is enabled.
-    var isSatelliteViewEnabled = false
+    private var isSatelliteViewEnabled = false
 
     /// Whether the dashboard scene is active.
     val isDashboardSceneActive
@@ -135,15 +135,17 @@ class FCPMapViewController : SurfaceCallback {
     var bannerViewHeight = 0.0
 
     /// To perform actions only once when map is loaded
-    var mapLoadedOnce = false
+    private var mapLoadedOnce = false
 
     /// A debounce object for optimizing surface events.
-    private var debounce = Debounce(CoroutineScope(Dispatchers.Main))
+    private var surfaceDebounce = Debounce(CoroutineScope(Dispatchers.Main))
+    private var cameraUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
 
     /// Default coordinates for the map
-    val defaultCoordinates = GeoCoordinates(21.1812352, 72.8629248)
-//    val defaultCoordinates = GeoCoordinates(-25.02970994781628, 134.28333173662492)
+//    val defaultCoordinates = GeoCoordinates(21.1812352, 72.8629248)
+    private val defaultCoordinates = GeoCoordinates(-25.02970994781628, 134.28333173662492)
 
+    /// Whether the surface is ready.
     private fun isSurfaceReady(surfaceContainer: SurfaceContainer): Bool {
         return surfaceContainer.surface != null && surfaceContainer.dpi != 0 && surfaceContainer.height != 0 && surfaceContainer.width != 0
     }
@@ -155,9 +157,8 @@ class FCPMapViewController : SurfaceCallback {
      */
     override fun onSurfaceAvailable(surfaceContainer: SurfaceContainer) {
         if (!isSurfaceReady(surfaceContainer)) return
-        debounce.debounce(1000L) {
-            print("surface available: $surfaceContainer")
 
+        surfaceDebounce.debounce(500L) {
             mapLoadedOnce = false
 
             AndroidAutoService.session?.carContext.let {
@@ -169,22 +170,23 @@ class FCPMapViewController : SurfaceCallback {
                 )
             }
 
-            mapView?.mapScene?.loadScene(MapScheme.NORMAL_DAY, ::onLoadScene)
-
             // Load the map scene using a map scheme to render the map with.
+            mapView?.mapScene?.loadScene(MapScheme.NORMAL_DAY, ::onLoadScene)
 
             toggleSatelliteViewHandler = { isSatelliteViewEnabled: Bool ->
                 this.isSatelliteViewEnabled = isSatelliteViewEnabled
 
-                var mapScheme: MapScheme = MapScheme.NORMAL_DAY
+                var mapScheme = MapScheme.NORMAL_DAY
 
-                //            if (this.traitCollection.userInterfaceStyle == .dark) {
-                //                mapScheme = if(isSatelliteViewEnabled)  MapScheme.HYBRID_NIGHT else
-                // MapScheme.NORMAL_NIGHT
-                //            } else {
-                //                mapScheme = if(isSatelliteViewEnabled)  MapScheme.HYBRID_DAY else
-                // MapScheme.NORMAL_DAY
-                //            }
+                AndroidAutoService.session?.carContext?.let {
+                    mapScheme = if (it.isDarkMode) {
+                        if (isSatelliteViewEnabled) MapScheme.HYBRID_NIGHT else
+                            MapScheme.NORMAL_NIGHT
+                    } else {
+                        if (isSatelliteViewEnabled) MapScheme.HYBRID_DAY else
+                            MapScheme.NORMAL_DAY
+                    }
+                }
 
                 mapView?.mapScene?.loadScene(mapScheme, ::onLoadScene)
             }
@@ -199,7 +201,9 @@ class FCPMapViewController : SurfaceCallback {
     override fun onStableAreaChanged(stableArea: Rect) {
         this.stableArea = stableArea
 
-        updateCameraPrincipalPoint()
+        cameraUpdateDebounce.debounce(500L) {
+            updateCameraPrincipalPoint()
+        }
     }
 
     /**
@@ -210,7 +214,9 @@ class FCPMapViewController : SurfaceCallback {
     override fun onVisibleAreaChanged(visibleArea: Rect) {
         this.visibleArea = visibleArea
 
-        updateCameraPrincipalPoint()
+        cameraUpdateDebounce.debounce(500L) {
+            updateCameraPrincipalPoint()
+        }
     }
 
     /**
@@ -218,6 +224,7 @@ class FCPMapViewController : SurfaceCallback {
      * [SurfaceCallback.onScroll] definition for more details.
      */
     override fun onScroll(distanceX: Float, distanceY: Float) {
+        if (!isPanningInterfaceVisible) return
         mapView?.gestures?.scrollHandler?.onScroll(distanceX, distanceY)
     }
 
@@ -226,6 +233,7 @@ class FCPMapViewController : SurfaceCallback {
      * definition for more details.
      */
     override fun onScale(focusX: Float, focusY: Float, scaleFactor: Float) {
+        if (!isPanningInterfaceVisible) return
         mapView?.gestures?.scaleHandler?.onScale(focusX, focusY, scaleFactor)
     }
 
@@ -234,6 +242,8 @@ class FCPMapViewController : SurfaceCallback {
      * definition for more details.
      */
     override fun onFling(velocityX: Float, velocityY: Float) {
+        if (!isPanningInterfaceVisible) return
+
         /**
          * Fling event appears to have inverted axis compared to scroll event on desktop head unit.
          * This should not be the case according to
@@ -253,14 +263,10 @@ class FCPMapViewController : SurfaceCallback {
         mapSurface.destroySurface()
     }
 
-    //    /// Trait collection
-    //    /// - Parameter previousTraitCollection: Previous trait collection
-    //    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?)
-    //    {
-    //        super.traitCollectionDidChange(previousTraitCollection)
-    //
-    //        toggleSatelliteViewHandler?.invoke(isSatelliteViewEnabled)
-    //    }
+    /** Called when the car configuration changes. */
+    fun onCarConfigurationChanged() {
+        toggleSatelliteViewHandler?.invoke(isSatelliteViewEnabled)
+    }
 
     /**
      * Completion handler when loading a map scene.
@@ -316,9 +322,7 @@ class FCPMapViewController : SurfaceCallback {
                     ?: mapController?.removeMarker(MapMarkerType.INCIDENT_ADDRESS)
 
                 mapCoordinates.destinationAddressCoordinates?.let {
-                    renderDestinationAddressMarker(
-                        it
-                    )
+                    renderDestinationAddressMarker(it)
                 }
                     ?: mapController?.removeMarker(MapMarkerType.DESTINATION_ADDRESS)
             }
@@ -398,10 +402,10 @@ class FCPMapViewController : SurfaceCallback {
 
         if (!mapLoadedOnce) {
             flyToCoordinates(defaultCoordinates)
+            toggleSatelliteViewHandler?.invoke(isSatelliteViewEnabled)
             mapLoadedOnce = true
         }
     }
-
 
     /**
      * Look at the area containing all the markers.
@@ -669,13 +673,13 @@ fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accura
     metadata.setString("polygon", MapMarkerType.INITIAL.name)
 
     val image = UIImageObject.fromFlutterAsset("assets/icons/carplay/position.png")
-    val markerSize = 30 * mapView!!.pixelScale
+    val markerSize = 30 * (mapView?.pixelScale ?: 1.0)
 
     mapController?.addMapMarker(
         coordinates = coordinates,
         markerImage = image,
         markerSize = CGSize(width = markerSize, height = markerSize),
-        metadata = metadata,
+        metadata = metadata
     )
     mapController?.addMapPolygon(
         coordinate = coordinates,
@@ -738,27 +742,25 @@ fun FCPMapViewController.flyToCoordinates(
     Logger.log("principlePoint at fly to: ${mapView!!.camera.principalPoint}")
 
     if (isPanningInterfaceVisible) {
-        val animation =
-            MapCameraAnimationFactory.flyTo(
-                GeoCoordinatesUpdate(coordinates),
-                GeoOrientationUpdate(0.0, 0.0),
-                0.0,
-                Duration.ofMillis(500)
-            )
+        val animation = MapCameraAnimationFactory.flyTo(
+            GeoCoordinatesUpdate(coordinates),
+            GeoOrientationUpdate(0.0, 0.0),
+            0.0,
+            Duration.ofMillis(500)
+        )
 
         mapView!!.camera.startAnimation(animation)
     } else {
-        val animation =
-            MapCameraAnimationFactory.flyTo(
-                GeoCoordinatesUpdate(coordinates),
-                GeoOrientationUpdate(0.0, 0.0),
-                MapMeasure(
-                    MapMeasure.Kind.DISTANCE,
-                    ConstantsEnum.DEFAULT_DISTANCE_IN_METERS
-                ),
-                bowFactor,
-                duration
-            )
+        val animation = MapCameraAnimationFactory.flyTo(
+            GeoCoordinatesUpdate(coordinates),
+            GeoOrientationUpdate(0.0, 0.0),
+            MapMeasure(
+                MapMeasure.Kind.DISTANCE,
+                ConstantsEnum.DEFAULT_DISTANCE_IN_METERS
+            ),
+            bowFactor,
+            duration
+        )
 
         mapView!!.camera.startAnimation(animation)
     }
