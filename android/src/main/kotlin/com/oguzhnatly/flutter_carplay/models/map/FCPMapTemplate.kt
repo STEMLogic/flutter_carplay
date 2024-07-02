@@ -142,7 +142,7 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
 
         val mapTemplate = NavigationTemplate.Builder().setBackgroundColor(CarColor.GREEN)
 
-        currentRoutingInfo?.let { mapTemplate.setNavigationInfo(it) }
+        routingInfo?.let { mapTemplate.setNavigationInfo(it) }
         destinationTravelEstimates?.let {
             mapTemplate.setDestinationTravelEstimate(it)
         }
