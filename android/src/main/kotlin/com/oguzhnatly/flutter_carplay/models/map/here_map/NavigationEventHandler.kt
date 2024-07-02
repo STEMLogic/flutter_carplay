@@ -24,6 +24,7 @@ import androidx.car.app.model.Distance
 import androidx.car.app.navigation.model.RoutingInfo
 import androidx.car.app.navigation.model.Step
 import androidx.car.app.navigation.model.TravelEstimate
+import androidx.car.app.navigation.model.Trip
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.LanguageCode
 import com.here.sdk.core.UnitSystem
@@ -113,7 +114,7 @@ class NavigationEventHandler {
         get() = FlutterCarplayPlugin.rootTemplate as? CPMapTemplate
 
     /// FCP Map template instance
-    val fcpMapTemplate: FCPMapTemplate?
+    private val fcpMapTemplate: FCPMapTemplate?
         get() = FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate
 
     /// FCP Map View Controller instance
@@ -184,7 +185,6 @@ class NavigationEventHandler {
                 return@RouteProgressListener
 
             // Travel estimates for the current maneuver
-
             val initialTravelEstimates =
                 TravelEstimate.Builder(
                     getMeasurement(currentManeuverProgress.remainingDistanceInMeters),
@@ -195,7 +195,6 @@ class NavigationEventHandler {
                 ).build()
 
             // Travel estimates for the overall route
-
             val travelEstimates =
                 TravelEstimate.Builder(
                     getMeasurement(distanceToDestination),
@@ -204,12 +203,6 @@ class NavigationEventHandler {
                         TimeZone.getDefault()
                     )
                 ).build()
-
-//            showPrimaryManeuver(
-//                maneuver = currentManeuver,
-//                initialTravelEstimates = initialTravelEstimates,
-//                travelEstimates = travelEstimates
-//            )
 
             Logger.log(
                 "Before Previous maneuver index: $previousManeuverIndex",
@@ -981,7 +974,6 @@ class NavigationEventHandler {
                 initialTravelEstimates.remainingDistance!!
             ).build()
 
-
 //            val cpManeuver = CPManeuver()
 //            cpManeuver.instructionVariants = [actionText]
 //            cpManeuver.initialTravelEstimates = initialTravelEstimates
@@ -999,7 +991,12 @@ class NavigationEventHandler {
             // Update the upcoming maneuver
             // It will change the maneuver in the map template automatically
             fcpMapTemplate?.update(currentRoutingInfo = cpManeuver)
-//            navigationSession?.updateTrip(Trip.Builder().setCurrentRoad(roadName).build())
+            fcpMapTemplate?.currentTrip?.destinations?.first()?.let {
+                Logger.log("updateTrip called by showPrimaryManeuver", "EstimatesHandler")
+
+                val cpTrip = Trip.Builder().addDestination(it, travelEstimates).build()
+                navigationSession?.updateTrip(cpTrip)
+            }
 //            navigationSession?.upcomingManeuvers = [cpManeuver]
 
             // Update the overall route estimates
@@ -1022,7 +1019,7 @@ class NavigationEventHandler {
 
     /// Show secondary maneuver
     /// - Parameter maneuver: maneuver
-    fun showSecondaryManeuver(maneuver: Maneuver) {
+    private fun showSecondaryManeuver(maneuver: Maneuver) {
         Logger.log("showSecondaryManeuver is called", "NavigationEventHandler")
 
         val action = maneuver.action.name.snakeToLowerCamelCase()
@@ -1094,7 +1091,7 @@ class NavigationEventHandler {
     /// - Parameters:
     ///   - initialTravelEstimates: initial travel estimates
     ///   - travelEstimates: travel estimates
-    fun updateEstimates(
+    private fun updateEstimates(
         initialTravelEstimates: CPTravelEstimates,
         travelEstimates: CPTravelEstimates,
     ) {
@@ -1102,8 +1099,19 @@ class NavigationEventHandler {
             .setCurrentStep(
                 fcpMapTemplate?.currentRoutingInfo?.currentStep!!,
                 initialTravelEstimates.remainingDistance!!
-            ).build()
-        fcpMapTemplate?.update(currentRoutingInfo = cpManeuver)
+            )
+
+        fcpMapTemplate?.currentRoutingInfo?.nextStep?.let { 
+            cpManeuver.setNextStep(it)
+        }
+
+        fcpMapTemplate?.update(currentRoutingInfo = cpManeuver.build())
+
+        fcpMapTemplate?.currentTrip?.destinations?.first()?.let {
+            Logger.log("updateTrip called by updateEstimates", "EstimatesHandler")
+            val cpTrip = Trip.Builder().addDestination(it, travelEstimates).build()
+            navigationSession?.updateTrip(cpTrip)
+        }
 
 //        if val cpManeuver = navigationSession?.upcomingManeuvers.first as? CPManeuver {
 //            navigationSession?.updateEstimates(initialTravelEstimates, for: cpManeuver)

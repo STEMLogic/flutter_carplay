@@ -28,10 +28,14 @@ import kotlinx.coroutines.Dispatchers
  */
 class AndroidAutoSession : Session() {
     private var flutterEngine: FlutterEngine? = null
+
+    /// A flag indicating whether the Flutter engine needs to be started.
     var isStartRequired = false
 
-    val screenManager = carContext.getCarService<ScreenManager>(ScreenManager::class.java)
+    /// The screen manager used to manage the screens in the Android Auto session.
+    val screenManager = carContext.getCarService(ScreenManager::class.java)
 
+    /// A debounce object for optimizing screen push.
     private val bouncer = Debounce(CoroutineScope(Dispatchers.Main))
 
     /**

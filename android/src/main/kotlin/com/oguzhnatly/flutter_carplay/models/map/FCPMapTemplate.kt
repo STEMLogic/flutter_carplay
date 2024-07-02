@@ -15,6 +15,7 @@ import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPMapTemplate
 import com.oguzhnatly.flutter_carplay.CPNavigationSession
+import com.oguzhnatly.flutter_carplay.CPTrip
 import com.oguzhnatly.flutter_carplay.FCPRootTemplate
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
 
@@ -68,6 +69,9 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
     /// The routing information associated with the map template.
     var currentRoutingInfo: RoutingInfo? = null
 
+    /// The trip associated with the map template.
+    var currentTrip: CPTrip? = null
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         assert(elementIdValue != null) {
@@ -107,12 +111,11 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
      * @return void
      */
     private fun initialize() {
-        AndroidAutoService.session?.carContext?.getCarService(AppManager::class.java)
-            ?.setSurfaceCallback(viewController)
+        AndroidAutoService.session?.carContext?.let {
+            it.getCarService(AppManager::class.java).setSurfaceCallback(viewController)
 
-        navigationSession =
-            AndroidAutoService.session?.carContext?.getCarService(NavigationManager::class.java)
-
+            navigationSession = it.getCarService(NavigationManager::class.java)
+        }
         navigationSession?.setNavigationManagerCallback(object : NavigationManagerCallback {
             /**
              * Overrides the `onStopNavigation` function and calls the
@@ -184,6 +187,7 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         leadingNavigationBarButtons: List<FCPBarButton>? = null,
         trailingNavigationBarButtons: List<FCPBarButton>? = null,
         currentRoutingInfo: RoutingInfo? = null,
+        removeRoutingInfo: Bool = false,
     ) {
         title?.let { this.title = it }
         automaticallyHidesNavigationBar?.let { this.automaticallyHidesNavigationBar = it }
@@ -192,7 +196,11 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         mapButtons?.let { this.mapButtons = it }
         leadingNavigationBarButtons?.let { this.leadingNavigationBarButtons = it }
         trailingNavigationBarButtons?.let { this.trailingNavigationBarButtons = it }
-        currentRoutingInfo?.let { this.currentRoutingInfo = it }
+        if (removeRoutingInfo) {
+            this.currentRoutingInfo = null
+        } else {
+            currentRoutingInfo?.let { this.currentRoutingInfo = it }
+        }
 
         onInvalidate()
     }
@@ -211,13 +219,13 @@ fun FCPMapTemplate.showTripPreviews(
     //    textConfiguration: FCPTripPreviewTextConfiguration?,
 ) {
     val cpTrips = trips.map { it.getTemplate() }
+    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
     //    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
     //    textConfiguration: textConfiguration?.get)
 }
 
 /** Hide trip previews. */
 fun FCPMapTemplate.hideTripPreviews() {
-    //    _super?.hideTripPreviews()
 }
 
 /**
@@ -243,7 +251,7 @@ fun FCPMapTemplate.startNavigation(trip: FCPTrip) {
 
     fcpMapViewController?.startNavigation(trip)
     navigationSession?.navigationStarted()
-    navigationSession?.updateTrip(trip.getTemplate())
+    navigationSession?.updateTrip(currentTrip ?: trip.getTemplate())
 }
 
 /** Stops the navigation. */
@@ -252,6 +260,8 @@ fun FCPMapTemplate.stopNavigation() {
     //    navigationSession = null
 
     fcpMapViewController?.stopNavigation()
+    update(removeRoutingInfo = true)
+    currentTrip = null
 }
 
 /**
