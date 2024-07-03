@@ -1,9 +1,10 @@
 package com.oguzhnatly.flutter_carplay
 
-import com.oguzhnatly.flutter_carplay.managers.audio.FCPSoundEffects
-import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.constraints.ConstraintManager
+import com.here.sdk.core.GeoCoordinates
+import com.oguzhnatly.flutter_carplay.managers.audio.FCPSoundEffects
+import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import com.oguzhnatly.flutter_carplay.models.action_sheet.FCPActionSheetTemplate
 import com.oguzhnatly.flutter_carplay.models.alert.FCPAlertTemplate
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
@@ -16,6 +17,23 @@ import com.oguzhnatly.flutter_carplay.models.list.FCPListSection
 import com.oguzhnatly.flutter_carplay.models.list.FCPListTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapButton
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
+import com.oguzhnatly.flutter_carplay.models.map.FCPTrip
+import com.oguzhnatly.flutter_carplay.models.map.dismissPanningInterface
+import com.oguzhnatly.flutter_carplay.models.map.here_map.MapCoordinates
+import com.oguzhnatly.flutter_carplay.models.map.here_map.primaryManeuverActionTextHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.recenterMapViewHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.secondaryManeuverActionTextHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.toggleOfflineModeHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.toggleSatelliteViewHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.toggleVoiceInstructionsHandler
+import com.oguzhnatly.flutter_carplay.models.map.here_map.updateMapCoordinatesHandler
+import com.oguzhnatly.flutter_carplay.models.map.hideTripPreviews
+import com.oguzhnatly.flutter_carplay.models.map.showPanningInterface
+import com.oguzhnatly.flutter_carplay.models.map.showTripPreviews
+import com.oguzhnatly.flutter_carplay.models.map.startNavigation
+import com.oguzhnatly.flutter_carplay.models.map.stopNavigation
+import com.oguzhnatly.flutter_carplay.models.map.zoomInMapView
+import com.oguzhnatly.flutter_carplay.models.map.zoomOutMapView
 import com.oguzhnatly.flutter_carplay.models.search.FCPSearchTemplate
 import com.oguzhnatly.flutter_carplay.models.voice_control.FCPVoiceControlTemplate
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -160,7 +178,11 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.activateVoiceControlState.name -> {
                 if (fcpPresentTemplate == null) {
-                    result.error("ERROR", "To activate a voice control state, a voice control template must be presented to CarPlay Screen at first.", null)
+                    result.error(
+                        "ERROR",
+                        "To activate a voice control state, a voice control template must be presented to CarPlay Screen at first.",
+                        null
+                    )
                     return
                 }
                 val args = call.arguments as? String ?: run {
@@ -178,12 +200,17 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.getActiveVoiceControlStateIdentifier.name -> {
                 if (fcpPresentTemplate == null) {
-                    result.error("ERROR", "To get the active voice control state identifier, a voice control template must be presented to CarPlay Screen at first.", null)
+                    result.error(
+                        "ERROR",
+                        "To get the active voice control state identifier, a voice control template must be presented to CarPlay Screen at first.",
+                        null
+                    )
                     return
                 }
 
                 if (fcpPresentTemplate is FCPVoiceControlTemplate) {
-                    val identifier = (fcpPresentTemplate as FCPVoiceControlTemplate).getActiveVoiceControlStateIdentifier()
+                    val identifier =
+                        (fcpPresentTemplate as FCPVoiceControlTemplate).getActiveVoiceControlStateIdentifier()
                     result.success(identifier)
                 } else {
                     result.success(null)
@@ -192,7 +219,11 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.startVoiceControl.name -> {
                 if (fcpPresentTemplate == null) {
-                    result.error("ERROR", "To start the voice control, a voice control template must be presented to CarPlay Screen at first.", null)
+                    result.error(
+                        "ERROR",
+                        "To start the voice control, a voice control template must be presented to CarPlay Screen at first.",
+                        null
+                    )
                     return
                 }
                 if (fcpPresentTemplate is FCPVoiceControlTemplate) {
@@ -205,7 +236,11 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.stopVoiceControl.name -> {
                 if (fcpPresentTemplate == null) {
-                    result.error("ERROR", "To stop the voice control, a voice control template must be presented to CarPlay Screen at first.", null)
+                    result.error(
+                        "ERROR",
+                        "To stop the voice control, a voice control template must be presented to CarPlay Screen at first.",
+                        null
+                    )
                     return
                 }
                 if (fcpPresentTemplate is FCPVoiceControlTemplate) {
@@ -231,7 +266,9 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 FCPSpeaker.setLanguage(Locale(language))
                 FCPSpeaker.speak(text) {
                     if (onCompleted) {
-                        FCPStreamHandlerPlugin.sendEvent(FCPChannelTypes.onSpeechCompleted.name, mapOf("elementId" to elementId))
+                        FCPStreamHandlerPlugin.sendEvent(
+                            FCPChannelTypes.onSpeechCompleted.name, mapOf("elementId" to elementId)
+                        )
                     }
                 }
                 result.success(true)
@@ -394,8 +431,6 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 }
             }
 
-            FCPChannelTypes.showOverlay.name -> {}
-
             FCPChannelTypes.getConfig.name -> {
                 val carContext = AndroidAutoService.session?.carContext
                 if (carContext == null) {
@@ -413,6 +448,370 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     "maximumSectionCount" to listItemLimit,
                 )
                 result.success(config)
+            }
+
+            FCPChannelTypes.showTripPreviews.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+                val trips = args?.get("trips") as? List<Map<String, Any>>
+
+                if (args == null || elementId == null || trips == null) {
+                    result.success(false)
+                    return
+                }
+
+                val selectedTrip = args["selectedTrip"] as? Map<String, Any>
+//                val textConfiguration = args["textConfiguration"] as? Map<String, Any>
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+
+                    val fcpTrips = trips.map { FCPTrip(it) }
+                    val fcpSelectedTrip = selectedTrip?.let { FCPTrip(it) }
+//                    val fcpTextConfiguration = textConfiguration?.let {
+//                        FCPTripPreviewTextConfiguration(it)
+//                    }
+                    mapTemplate.showTripPreviews(
+                        trips = fcpTrips,
+                        selectedTrip = fcpSelectedTrip,
+//                        textConfiguration = fcpTextConfiguration
+                    )
+                }
+
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.hideTripPreviews.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.hideTripPreviews()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.showBanner.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+                val message = args?.get("message") as? String
+                val color = args?.get("color") as? Int
+
+                if (args == null || elementId == null || message == null || color == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+//                    mapTemplate.fcpMapViewController?.showBanner(
+//                        message = message, color = color
+//                    )
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.hideBanner.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+//                    mapTemplate.fcpMapViewController?.hideBanner()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.showToast.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+                val message = args?.get("message") as? String
+                val duration = args?.get("duration") as? Double
+
+                if (args == null || elementId == null || message == null || duration == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+//                    mapTemplate.fcpMapViewController?.showToast(
+//                        message = message, duration = duration
+//                    )
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.showOverlay.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                val primaryTitle = args.get("primaryTitle") as? String
+                val secondaryTitle = args.get("secondaryTitle") as? String
+                val subtitle = args.get("subtitle") as? String
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+//                    mapTemplate.fcpMapViewController?.showOverlay(
+//                        primaryTitle = primaryTitle,
+//                        secondaryTitle = secondaryTitle,
+//                        subtitle = subtitle
+//                    )
+                }
+
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.hideOverlay.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+//                    mapTemplate.fcpMapViewController?.hideOverlay()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.showPanningInterface.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.showPanningInterface()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.dismissPanningInterface.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.dismissPanningInterface()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.zoomInMapView.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.fcpMapViewController?.zoomInMapView()
+                }
+
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.zoomOutMapView.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.fcpMapViewController?.zoomOutMapView()
+                }
+
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.startNavigation.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+                val trip = args?.get("trip") as? Map<String, Any>
+
+                if (args == null || elementId == null || trip == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    val fcpTrip = FCPTrip(trip)
+                    mapTemplate.startNavigation(fcpTrip)
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.stopNavigation.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val elementId = args?.get("_elementId") as? String
+
+                if (args == null || elementId == null) {
+                    result.success(false)
+                    return
+                }
+
+                // Find the map template based on the provided element ID
+                val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
+                    mapTemplate.stopNavigation()
+                }
+                result.success(template != null)
+            }
+
+            FCPChannelTypes.onManeuverActionTextRequestComplete.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val text = args?.get("actionText") as? String
+                val isPrimary = args?.get("isPrimary") as? Bool
+
+                if (args == null || text == null || isPrimary == null) {
+                    result.success(false)
+                    return
+                }
+
+                if (isPrimary) primaryManeuverActionTextHandler?.invoke(text)
+                else secondaryManeuverActionTextHandler?.invoke(text)
+
+                result.success(true)
+            }
+
+            FCPChannelTypes.toggleOfflineMode.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val isOffline = args?.get("isOffline") as? Bool
+
+                if (args == null || isOffline == null) {
+                    result.success(false)
+                    return
+                }
+
+                toggleOfflineModeHandler?.invoke(isOffline)
+
+                result.success(true)
+            }
+
+            FCPChannelTypes.toggleVoiceInstructions.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val isMuted = args?.get("isMuted") as? Bool
+
+                if (args == null || isMuted == null) {
+                    result.success(false)
+                    return
+                }
+
+                toggleVoiceInstructionsHandler?.invoke(isMuted)
+
+                result.success(true)
+            }
+
+            FCPChannelTypes.toggleSatelliteView.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val showSatelliteView = args?.get("showSatelliteView") as? Bool
+
+                if (args == null || showSatelliteView == null) {
+                    result.success(false)
+                    return
+                }
+
+                toggleSatelliteViewHandler?.invoke(showSatelliteView)
+
+                result.success(true)
+            }
+
+            FCPChannelTypes.recenterMapView.name -> {
+                val args = call.arguments as? Map<String, Any>
+                val recenterMapPosition = args?.get("recenterMapPosition") as? String
+
+                if (args == null || recenterMapPosition == null) {
+                    result.success(false)
+                    return
+                }
+
+                recenterMapViewHandler?.invoke(recenterMapPosition)
+
+                result.success(true)
+            }
+
+            FCPChannelTypes.updateMapCoordinates.name -> {
+                val args = call.arguments as? Map<String, Any>
+
+                if (args == null) {
+                    result.success(false)
+                    return
+                }
+
+                var stationAddressCoordinates: GeoCoordinates? = null
+                var incidentAddressCoordinates: GeoCoordinates? = null
+                var destinationAddressCoordinates: GeoCoordinates? = null
+
+                val stationAddressLatitude = args["stationAddressLatitude"] as? Double
+                val stationAddressLongitude = args["stationAddressLongitude"] as? Double
+                if (stationAddressLatitude != null && stationAddressLongitude != null) {
+                    stationAddressCoordinates = GeoCoordinates(
+                        stationAddressLatitude, stationAddressLongitude
+                    )
+                }
+
+                val incidentAddressLatitude = args["incidentAddressLatitude"] as? Double
+                val incidentAddressLongitude = args["incidentAddressLongitude"] as? Double
+                if (incidentAddressLatitude != null && incidentAddressLongitude != null) {
+                    incidentAddressCoordinates = GeoCoordinates(
+                        incidentAddressLatitude, incidentAddressLongitude
+                    )
+                }
+
+                val destinationAddressLatitude = args["destinationAddressLatitude"] as? Double
+                val destinationAddressLongitude = args["destinationAddressLongitude"] as? Double
+                if (destinationAddressLatitude != null && destinationAddressLongitude != null) {
+                    destinationAddressCoordinates = GeoCoordinates(
+                        destinationAddressLatitude, destinationAddressLongitude
+                    )
+                }
+
+                val mapCoordinates = MapCoordinates(
+                    stationAddressCoordinates = stationAddressCoordinates,
+                    incidentAddressCoordinates = incidentAddressCoordinates,
+                    destinationAddressCoordinates = destinationAddressCoordinates
+                )
+
+                updateMapCoordinatesHandler?.invoke(mapCoordinates)
+
+                result.success(false)
             }
 
             else -> result.notImplemented()
@@ -552,28 +951,27 @@ private fun FlutterCarplayPlugin.Companion.pushTemplate(
     }
 
     // Create the appropriate FCPTemplate based on the runtime type
-    val pushTemplate =
-        when (runtimeType) {
-            //        FCPTabBarTemplate::class.java.simpleName ->
-            //             FCPTabBarTemplate(obj = templateArgs)
-            //
-            FCPGridTemplate::class.java.simpleName -> FCPGridTemplate(obj = templateArgs)
-            //
-            FCPInformationTemplate::class.java.simpleName -> FCPInformationTemplate(obj = templateArgs)
-            //
-            //        FCPPointOfInterestTemplate::class.java.simpleName ->
-            //             FCPPointOfInterestTemplate(obj = templateArgs)
-            //
-            FCPMapTemplate::class.java.simpleName -> FCPMapTemplate(obj = templateArgs)
-            //
-            FCPSearchTemplate::class.java.simpleName -> FCPSearchTemplate(obj = templateArgs)
+    val pushTemplate = when (runtimeType) {
+        //        FCPTabBarTemplate::class.java.simpleName ->
+        //             FCPTabBarTemplate(obj = templateArgs)
+        //
+        FCPGridTemplate::class.java.simpleName -> FCPGridTemplate(obj = templateArgs)
+        //
+        FCPInformationTemplate::class.java.simpleName -> FCPInformationTemplate(obj = templateArgs)
+        //
+        //        FCPPointOfInterestTemplate::class.java.simpleName ->
+        //             FCPPointOfInterestTemplate(obj = templateArgs)
+        //
+        FCPMapTemplate::class.java.simpleName -> FCPMapTemplate(obj = templateArgs)
+        //
+        FCPSearchTemplate::class.java.simpleName -> FCPSearchTemplate(obj = templateArgs)
 
-            FCPListTemplate::class.java.simpleName -> {
-                FCPListTemplate(obj = templateArgs, templateType = FCPListTemplateTypes.DEFAULT)
-            }
-
-            else -> null
+        FCPListTemplate::class.java.simpleName -> {
+            FCPListTemplate(obj = templateArgs, templateType = FCPListTemplateTypes.DEFAULT)
         }
+
+        else -> null
+    }
     if (pushTemplate == null) {
         result.success(false)
         return
@@ -766,16 +1164,16 @@ private fun FlutterCarplayPlugin.Companion.updateListItem(
  */
 private fun FlutterCarplayPlugin.Companion.findSearchTemplate(
     elementId: String,
-    actionWhenFound: (searchTemplate: FCPSearchTemplate) -> Unit
+    actionWhenFound: (searchTemplate: FCPSearchTemplate) -> Unit,
 ) {
     // Filter the template history to include only FCPSearchTemplate instances.
-    val filteredTemplates = fcpTemplateHistory.filter { it is FCPSearchTemplate }
+    val filteredTemplates = fcpTemplateHistory.filterIsInstance<FCPSearchTemplate>()
 
     // Iterate through the templates to find the one with the matching element ID.
     for (template in filteredTemplates) {
-        if (template != null && template.elementId == elementId) {
+        if (template.elementId == elementId) {
             // Perform the specified action when the template is found.
-            actionWhenFound(template as FCPSearchTemplate)
+            actionWhenFound(template)
             return
         }
     }
@@ -814,7 +1212,7 @@ private fun FlutterCarplayPlugin.Companion.findInformationTemplate(
 private fun FlutterCarplayPlugin.Companion.findMapTemplate(
     elementId: String,
     actionWhenFound: (mapTemplate: FCPMapTemplate) -> Unit,
-) {
+): FCPMapTemplate? {
     // Get the array of FCPMapTemplate instances.
     val templates = getFCPMapTemplatesFromHistory()
 
@@ -823,9 +1221,10 @@ private fun FlutterCarplayPlugin.Companion.findMapTemplate(
         if (template.elementId == elementId) {
             // Perform the specified action when the template is found.
             actionWhenFound(template)
-            break
+            return template
         }
     }
+    return null
 }
 
 /**
@@ -846,7 +1245,7 @@ private fun FlutterCarplayPlugin.Companion.findListTemplate(
         if (template.elementId == elementId) {
             // Perform the specified action when the template is found.
             actionWhenFound(template)
-            break
+            return
         }
     }
 }

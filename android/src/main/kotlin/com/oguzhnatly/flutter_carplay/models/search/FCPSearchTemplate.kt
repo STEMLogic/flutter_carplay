@@ -19,7 +19,7 @@ import kotlinx.coroutines.Dispatchers
  */
 class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.SearchCallback {
 
-    /// The underlying FCPSearchTemplate instance.
+    /// The underlying CPSearchTemplate instance.
     private lateinit var _super: CPSearchTemplate
 
     /// A debounce object for optimizing search events.

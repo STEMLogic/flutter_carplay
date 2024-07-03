@@ -25,7 +25,7 @@ object UIImageObject {
                 }
             }
         } catch (e: Exception) {
-            Logger.log(e.message ?: e.toString(), tag = "UIImage")
+            Logger.log(e.message ?: e.toString(), tag = "UIImage catch")
             return CarIcon.ERROR
         }
         Logger.log("image \"$name\" not found", tag = "UIImage")

@@ -2,24 +2,23 @@ package com.oguzhnatly.flutter_carplay.models.voice_control
 
 import androidx.car.app.model.Action
 import androidx.car.app.model.MessageTemplate
+import com.oguzhnatly.flutter_carplay.AndroidAutoService
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPVoiceControlTemplate
 import com.oguzhnatly.flutter_carplay.FCPPresentTemplate
 import com.oguzhnatly.flutter_carplay.managers.voice_control.FCPSpeechRecognizer
 
-/** A custom template for voice control on Android Auto.
+/**
+ * A custom template for voice control on Android Auto.
  *
  * @param obj A dictionary containing the properties of the voice control template.
  */
 class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
-
     /// The underlying CPVoiceControlTemplate instance.
     private lateinit var _super: CPVoiceControlTemplate
 
     /// The speech recognizer associated with the voice control template.
     private var speechRecognizer: FCPSpeechRecognizer? = null
-
-    /// An array of voice control states for the template.
-    //private var voiceControlStates: List<CPVoiceControlState>?
 
     /// An array of voice control states in Objective-C representation.
     private var objcVoiceControlStates: List<FCPVoiceControlState>
@@ -27,7 +26,11 @@ class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     /// The locale associated with the voice control template.
     private var locale: String
 
+    /// The identifier of the currently active voice control state.
     private var activeState: FCPVoiceControlState? = null
+
+    /// Whether the recognizer is initialized.
+    private var isRecognizerInitialized: Bool = false
 
     init {
         val elementIdValue = obj["_elementId"] as? String
@@ -44,17 +47,19 @@ class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
         } ?: emptyList()
         activeState = objcVoiceControlStates.first()
         speechRecognizer = FCPSpeechRecognizer()
-        /*voiceControlStates = objcVoiceControlStates.map {
-            $0.get
-        }*/
     }
 
-
-    /** Returns a `CPVoiceControlTemplate` object representing the voice control template.
+    /**
+     * Returns a `CPVoiceControlTemplate` object representing the voice control template.
      *
      * @return A `CPVoiceControlTemplate` object.
      */
     override fun getTemplate(): CPVoiceControlTemplate {
+        if (AndroidAutoService.session?.carContext != null && !isRecognizerInitialized) {
+            speechRecognizer?.assistant?.initializeRecognizer()
+            isRecognizerInitialized = true
+        }
+
         val voiceControlTemplate =
             MessageTemplate.Builder(activeState?.titleVariants?.first() ?: "").setLoading(true)
                 .setHeaderAction(Action.Builder(Action.BACK).setEnabled(false).build())
@@ -62,7 +67,8 @@ class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
         return _super
     }
 
-    /** Activates the voice control state with the specified identifier.
+    /**
+     * Activates the voice control state with the specified identifier.
      *
      * @param identifier The identifier of the voice control state to activate.
      */
@@ -71,7 +77,8 @@ class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
         onInvalidate()
     }
 
-    /** Retrieves the identifier of the currently active voice control state.
+    /**
+     * Retrieves the identifier of the currently active voice control state.
      *
      * @return The identifier of the active voice control state, or `nil` if none is active.
      */
@@ -79,12 +86,12 @@ class FCPVoiceControlTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
         return activeState?.identifier
     }
 
-    /// Starts the voice control template, initiating speech recognition.
+    /** Starts the voice control template, initiating speech recognition. */
     fun start() {
         speechRecognizer?.record(locale)
     }
 
-    /// Stops the voice control template, ending speech recognition.
+    /** Stops the voice control template, ending speech recognition. */
     fun stop() {
         speechRecognizer?.stopRecording()
     }

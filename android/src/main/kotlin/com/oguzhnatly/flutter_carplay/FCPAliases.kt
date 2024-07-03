@@ -12,8 +12,10 @@ import androidx.car.app.model.Row
 import androidx.car.app.model.SearchTemplate
 import androidx.car.app.model.SectionedItemList
 import androidx.car.app.model.Template
+import androidx.car.app.navigation.NavigationManager
 import androidx.car.app.navigation.model.Destination
 import androidx.car.app.navigation.model.NavigationTemplate
+import androidx.car.app.navigation.model.TravelEstimate
 import androidx.car.app.navigation.model.Trip
 
 typealias Bool = Boolean
@@ -38,3 +40,5 @@ typealias CPRouteChoice = Destination
 typealias CPTrip = Trip
 typealias CPVoiceControlTemplate = MessageTemplate
 typealias CPSearchTemplate = SearchTemplate
+typealias CPNavigationSession = NavigationManager
+typealias CPTravelEstimates = TravelEstimate

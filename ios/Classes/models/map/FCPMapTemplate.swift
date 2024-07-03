@@ -178,6 +178,7 @@ class FCPMapTemplate: NSObject {
 
 extension FCPMapTemplate {
     /// Show trip previews
+    ///
     /// - Parameters:
     ///   - trips: The array of trips to show
     ///   - selectedTrip: The selected trip
@@ -194,6 +195,7 @@ extension FCPMapTemplate {
     }
 
     /// Starts the navigation
+    ///
     /// - Parameter trip: The trip to start navigation
     func startNavigation(trip: CPTrip) {
         if navigationSession != nil {
@@ -222,12 +224,14 @@ extension FCPMapTemplate {
     }
 
     /// Pans the camera in the specified direction
+    ///
     /// - Parameter animated: A boolean value indicating whether the transition should be animated
     func showPanningInterface(animated: Bool) {
         _super?.showPanningInterface(animated: animated)
     }
 
     /// Dismisses the panning interface
+    ///
     /// - Parameter animated: A boolean value indicating whether the transition should be animated
     func dismissPanningInterface(animated: Bool) {
         _super?.dismissPanningInterface(animated: animated)
@@ -266,6 +270,7 @@ extension FCPMapTemplate: CPMapTemplateDelegate {
     }
 
     /// Called when the map template is panning
+    ///
     /// - Parameters:
     ///   - maptemplate: The map template
     ///   - direction: The direction of the panning

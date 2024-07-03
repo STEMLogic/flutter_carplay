@@ -1,21 +1,22 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
 import androidx.car.app.AppManager
-import androidx.car.app.OnDoneCallback
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
 import androidx.car.app.navigation.NavigationManager
 import androidx.car.app.navigation.NavigationManagerCallback
 import androidx.car.app.navigation.model.NavigationTemplate
-import androidx.car.app.serialization.Bundleable
+import androidx.car.app.navigation.model.RoutingInfo
+import androidx.car.app.navigation.model.TravelEstimate
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPMapTemplate
-import com.oguzhnatly.flutter_carplay.CPTrip
+import com.oguzhnatly.flutter_carplay.CPNavigationSession
+import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPRootTemplate
+import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
-
 
 /**
  * A custom Android Auto map template with additional customization options.
@@ -23,7 +24,6 @@ import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
  * @param obj A dictionary containing the configuration parameters for the map template.
  */
 class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
-
     /// The super template object representing the CarPlay map template.
     lateinit var _super: CPMapTemplate
 
@@ -43,8 +43,8 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
     /// The trailing navigation bar buttons for the map template.
     private var trailingNavigationBarButtons: List<FCPBarButton>
 
-//    /// The dashboard buttons to be displayed on the CarPlay dashboard.
-//    private var dashboardButtons: List<FCPDashboardButton>
+    //    /// The dashboard buttons to be displayed on the CarPlay dashboard.
+    //    private var dashboardButtons: List<FCPDashboardButton>
 
     /// A boolean value indicating whether the navigation bar is automatically hidden.
     private var automaticallyHidesNavigationBar: Bool
@@ -55,12 +55,21 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
     /// A boolean value indicating whether the map is in panning mode.
     var isPanningInterfaceVisible: Bool = false
 
-    /// Navigation session used to manage the upcomingManeuvers and  arrival estimation details
-    var navigationSession: NavigationManager? = null
+    /// Navigation session used to manage the upcomingManeuvers and  arrival estimation details.
+    var navigationSession: CPNavigationSession? = null
+
+    /// Flag to check if the car context is initialized.
+    private var isCarContextInitialized: Bool = false
 
     /// Get the `FCPMapViewController` associated with the map template.
     val fcpMapViewController: FCPMapViewController?
         get() = viewController as? FCPMapViewController
+
+    /// The routing information associated with the map template.
+    var routingInfo: RoutingInfo? = null
+
+    /// The current destination travel estimates associated with the map template.
+    private var destinationTravelEstimates: TravelEstimate? = null
 
     init {
         val elementIdValue = obj["_elementId"] as? String
@@ -73,51 +82,71 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         hidesButtonsWithNavigationBar = obj["hidesButtonsWithNavigationBar"] as? Bool ?: false
         isPanningInterfaceVisible = obj["isPanningInterfaceVisible"] as? Bool ?: false
 
-        mapButtons = (obj["mapButtons"] as? List<Map<String, Any>>)?.map {
-            FCPMapButton(it)
-        } ?: emptyList()
+        mapButtons =
+            (obj["mapButtons"] as? List<Map<String, Any>>)?.map { FCPMapButton(it) } ?: emptyList()
 
-//        dashboardButtons = (obj["dashboardButtons"] as? List<Map<String, Any>>)?.map {
-//            FCPDashboardButton(it)
-//        } ?: emptyList()
+        //        dashboardButtons = (obj["dashboardButtons"] as? List<Map<String, Any>>)?.map {
+        //            FCPDashboardButton(it)
+        //        } ?: emptyList()
 
         leadingNavigationBarButtons =
             (obj["leadingNavigationBarButtons"] as? List<Map<String, Any>>)?.map {
                 FCPBarButton(it)
-            }
-                ?: emptyList()
+            } ?: emptyList()
         trailingNavigationBarButtons =
             (obj["trailingNavigationBarButtons"] as? List<Map<String, Any>>)?.map {
                 FCPBarButton(it)
-            }
-                ?: emptyList()
+            } ?: emptyList()
 
         // Initialize the view controller.
         viewController = FCPMapViewController()
+    }
 
-        AndroidAutoService.session?.carContext?.getCarService(AppManager::class.java)
-            ?.setSurfaceCallback(viewController)
+    /**
+     * Overrides the `onStopNavigation` function and calls the `super.onStopNavigation()` method to
+     * perform any necessary cleanup. Then, calls the `stopNavigation()` method to stop the
+     * navigation.
+     *
+     * @return void
+     */
+    private fun initialize() {
+        AndroidAutoService.session?.carContext?.let {
+            it.getCarService(AppManager::class.java).setSurfaceCallback(viewController)
 
-        navigationSession =
-            AndroidAutoService.session?.carContext?.getCarService(NavigationManager::class.java)
-
+            navigationSession = it.getCarService(NavigationManager::class.java)
+        }
         navigationSession?.setNavigationManagerCallback(object : NavigationManagerCallback {
             /**
-             * Overrides the `onStopNavigation` function and calls the `super.onStopNavigation()`
-             * method to perform any necessary cleanup. Then, calls the `stopNavigation()`
-             * method to stop the navigation.
+             * Overrides the `onStopNavigation` function and calls the
+             * `super.onStopNavigation()` method to perform any necessary cleanup. Then,
+             * calls the `stopNavigation()` method to stop the navigation.
              *
              * @return void
              */
             override fun onStopNavigation() {
                 stopNavigation()
+                FCPStreamHandlerPlugin.sendEvent(
+                    type = FCPChannelTypes.onNavigationCompletedFromCarplay.name,
+                    data = mapOf()
+                )
             }
         })
     }
 
     /** Gets the Android Auto map template object based on the configured parameters. */
     override fun getTemplate(): CPMapTemplate {
-        val mapTemplate = NavigationTemplate.Builder()
+        if (AndroidAutoService.session?.carContext != null && !isCarContextInitialized) {
+            initialize()
+            isCarContextInitialized = true
+        }
+
+        val mapTemplate = NavigationTemplate.Builder().setBackgroundColor(CarColor.GREEN)
+
+        routingInfo?.let { mapTemplate.setNavigationInfo(it) }
+        destinationTravelEstimates?.let {
+            mapTemplate.setDestinationTravelEstimate(it)
+        }
+
         if (mapButtons.isNotEmpty()) {
             val actionStrip = ActionStrip.Builder()
             for (button in mapButtons) {
@@ -138,12 +167,6 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
             mapTemplate.setActionStrip(actionStrip.build())
         }
 
-        mapTemplate.setPanModeListener { isPanningInterfaceVisible = it }
-
-//        mapTemplate.automaticallyHidesNavigationBar = automaticallyHidesNavigationBar
-//        mapTemplate.hidesButtonsWithNavigationBar = hidesButtonsWithNavigationBar
-//        mapTemplate.mapDelegate = self
-
         _super = mapTemplate.build()
         return _super
     }
@@ -152,20 +175,30 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
      * Updates the properties of the map template.
      *
      * @param title The new title text.
-     * @param automaticallyHidesNavigationBar A boolean value indicating whether the navigation bar is automatically hidden.
-     * @param hidesButtonsWithNavigationBar A boolean value indicating whether buttons are hidden with the navigation bar.
+     * @param automaticallyHidesNavigationBar A boolean value indicating whether the navigation bar
+     * is automatically hidden.
+     * @param hidesButtonsWithNavigationBar A boolean value indicating whether buttons are hidden
+     * with the navigation bar.
      * @param mapButtons The new array of map buttons.
      * @param leadingNavigationBarButtons The new array of leading navigation bar buttons.
      * @param trailingNavigationBarButtons The new array of trailing navigation bar buttons.
+     * @param destinationTravelEstimates The new destination travel estimates.
+     * @param routingInfo The new routing information.
+     * @param removeRoutingInfo A boolean value indicating whether the routing information should
+     * be removed.
+     *
      */
     fun update(
-        title: String?,
-        automaticallyHidesNavigationBar: Bool?,
-        hidesButtonsWithNavigationBar: Bool?,
-        isPanningInterfaceVisible: Bool?,
-        mapButtons: List<FCPMapButton>?,
-        leadingNavigationBarButtons: List<FCPBarButton>?,
-        trailingNavigationBarButtons: List<FCPBarButton>?,
+        title: String? = null,
+        automaticallyHidesNavigationBar: Bool? = null,
+        hidesButtonsWithNavigationBar: Bool? = null,
+        isPanningInterfaceVisible: Bool? = null,
+        mapButtons: List<FCPMapButton>? = null,
+        leadingNavigationBarButtons: List<FCPBarButton>? = null,
+        trailingNavigationBarButtons: List<FCPBarButton>? = null,
+        destinationTravelEstimates: TravelEstimate? = null,
+        routingInfo: RoutingInfo? = null,
+        removeRoutingInfo: Bool = false,
     ) {
         title?.let { this.title = it }
         automaticallyHidesNavigationBar?.let { this.automaticallyHidesNavigationBar = it }
@@ -174,6 +207,14 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         mapButtons?.let { this.mapButtons = it }
         leadingNavigationBarButtons?.let { this.leadingNavigationBarButtons = it }
         trailingNavigationBarButtons?.let { this.trailingNavigationBarButtons = it }
+
+        if (removeRoutingInfo) {
+            this.routingInfo = null
+            this.destinationTravelEstimates = null
+        } else {
+            routingInfo?.let { this.routingInfo = it }
+            destinationTravelEstimates?.let { this.destinationTravelEstimates = it }
+        }
 
         onInvalidate()
     }
@@ -189,16 +230,16 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
 fun FCPMapTemplate.showTripPreviews(
     trips: List<FCPTrip>,
     selectedTrip: FCPTrip?,
-//    textConfiguration: FCPTripPreviewTextConfiguration?,
+    //    textConfiguration: FCPTripPreviewTextConfiguration?,
 ) {
     val cpTrips = trips.map { it.getTemplate() }
-//    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
-//    textConfiguration: textConfiguration?.get)
+//    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
+    //    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
+    //    textConfiguration: textConfiguration?.get)
 }
 
 /** Hide trip previews. */
 fun FCPMapTemplate.hideTripPreviews() {
-//    _super?.hideTripPreviews()
 }
 
 /**
@@ -206,105 +247,36 @@ fun FCPMapTemplate.hideTripPreviews() {
  *
  * @param trip The trip to start navigation
  */
-fun FCPMapTemplate.startNavigation(trip: CPTrip) {
-//    if (navigationSession != null) {
-//        navigationSession?.navigationEnded()
-//        navigationSession = null
-//    }
+fun FCPMapTemplate.startNavigation(trip: FCPTrip) {
+    navigationSession?.navigationEnded()
 
     hideTripPreviews()
-//    navigationSession = _super?.startNavigationSession(for: trip)
 
-//    if # available(iOS 15.4, *) {
-//        navigationSession?.pauseTrip(for:.loading, description: "", turnCardColor: .systemGreen)
-//    } else {
-//        navigationSession?.pauseTrip(for:.loading, description: "")
-//    }
-
-    navigationSession?.updateTrip(trip)
     fcpMapViewController?.startNavigation(trip)
     navigationSession?.navigationStarted()
+    update(routingInfo = RoutingInfo.Builder().setLoading(true).build())
 }
 
 /** Stops the navigation. */
 fun FCPMapTemplate.stopNavigation() {
     navigationSession?.navigationEnded()
-//    navigationSession = null
 
     fcpMapViewController?.stopNavigation()
+    update(removeRoutingInfo = true)
 }
 
-/**
- * Pans the camera in the specified direction
- *
- * @param animated A boolean value indicating whether the transition should be animated
- */
+/** Pans the camera in the specified direction. */
 fun FCPMapTemplate.showPanningInterface() {
-    _super.panModeDelegate?.sendPanModeChanged(true, object : OnDoneCallback {
-        override fun onSuccess(response: Bundleable?) {
-            print("pan mode enable success: $response")
-        }
+    isPanningInterfaceVisible = true
 
-        override fun onFailure(response: Bundleable) {
-            print("pan mode enable failed: $response")
-
-        }
-    })
+//    fcpMapViewController?.hideSubviews()
+    fcpMapViewController?.mapController?.navigationHelper?.stopCameraTracking()
 }
 
-/**
- * Dismisses the panning interface
- *
- * @param animated A boolean value indicating whether the transition should be animated
- */
+/** Dismisses the panning interface. */
 fun FCPMapTemplate.dismissPanningInterface() {
-    _super.panModeDelegate?.sendPanModeChanged(false, object : OnDoneCallback {
-        override fun onSuccess(response: Bundleable?) {
-            print("pan mode enable success: $response")
-        }
+    isPanningInterfaceVisible = false
 
-        override fun onFailure(response: Bundleable) {
-            print("pan mode enable failed: $response")
-
-        }
-    })
+//    fcpMapViewController?.showSubviews()
+    fcpMapViewController?.mapController?.navigationHelper?.startCameraTracking()
 }
-
-
-//extension FCPMapTemplate: CPMapTemplateDelegate {
-//    /// Called when the map template has started a trip
-//    /// - Parameter
-//    ///   - mapTemplate: The map template
-//    ///   - trip: The trip that was started
-//    ///   - routeChoice: The route choice
-//    func mapTemplate (_: CPMapTemplate, startedTrip trip: CPTrip, using _: CPRouteChoice) {
-//        let originCoordinate = trip . origin . placemark . coordinate
-//                let destinationCoordinate = trip . destination . placemark . coordinate
-//
-//                DispatchQueue.main.async {
-//                    FCPStreamHandlerPlugin.sendEvent(type: FCPChannelTypes. onNavigationStartedFromCarplay, data: ["sourceLatitude": originCoordinate.latitude, "sourceLongitude": originCoordinate.longitude, "destinationLatitude": destinationCoordinate.latitude, "destinationLongitude": destinationCoordinate.longitude])
-//                }
-//    }
-//
-//    /// Called when the panning interface is shown
-//    /// - Parameter mapTemplate: The map template
-//    func mapTemplateDidShowPanningInterface (_: CPMapTemplate) {
-//        fcpMapViewController?.hideSubviews()
-//        fcpMapViewController?.mapController?.navigationHelper.stopCameraTracking()
-//    }
-//
-//    /// Called when the panning interface is dismissed
-//    /// - Parameter mapTemplate: The map template
-//    func mapTemplateDidDismissPanningInterface (_: CPMapTemplate) {
-//        fcpMapViewController?.showSubviews()
-//        fcpMapViewController?.mapController?.navigationHelper.startCameraTracking()
-//    }
-//
-//    /// Called when the map template is panning
-//    /// - Parameters:
-//    ///   - maptemplate: The map template
-//    ///   - direction: The direction of the panning
-//    func mapTemplate (_: CPMapTemplate, panWith direction: CPMapTemplate.PanDirection) {
-//        fcpMapViewController?.panInDirection(direction)
-//    }
-//}

@@ -32,6 +32,7 @@ class RouteCalculator {
     }
 
     /// Calculates a route between two waypoints.
+    ///
     /// - Parameters:
     ///   - start: Starting waypoint
     ///   - destination: Destination waypoint

@@ -31,18 +31,18 @@ class HEREPositioningSimulator {
     private var locationSimulator: LocationSimulator? = null
 
     // Starts route playback.
-    fun startLocating(locationListener: LocationListener?, route: Route?) {
+    fun startLocating(locationListener: LocationListener?, route: Route) {
         if (locationSimulator != null) {
-            locationSimulator!!.stop()
+            locationSimulator?.stop()
         }
 
         locationSimulator = createLocationSimulator(locationListener, route)
-        locationSimulator!!.start()
+        locationSimulator?.start()
     }
 
     fun stopLocating() {
         if (locationSimulator != null) {
-            locationSimulator!!.stop()
+            locationSimulator?.stop()
             locationSimulator = null
         }
     }
@@ -50,7 +50,7 @@ class HEREPositioningSimulator {
     // Provides fake GPS signals based on the route geometry.
     private fun createLocationSimulator(
         locationListener: LocationListener?,
-        route: Route?,
+        route: Route,
     ): LocationSimulator {
         val locationSimulatorOptions = LocationSimulatorOptions()
         locationSimulatorOptions.speedFactor = 2.0
@@ -59,7 +59,7 @@ class HEREPositioningSimulator {
         val locationSimulator: LocationSimulator
 
         try {
-            locationSimulator = LocationSimulator(route!!, locationSimulatorOptions)
+            locationSimulator = LocationSimulator(route, locationSimulatorOptions)
         } catch (e: InstantiationErrorException) {
             throw RuntimeException("Initialization of LocationSimulator failed: " + e.error.name)
         }

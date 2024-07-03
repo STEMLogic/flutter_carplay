@@ -18,8 +18,7 @@ import com.oguzhnatly.flutter_carplay.UIImageObject
  *
  * @param obj A map containing information about the list item.
  */
-class FCPListItem
-    (obj: Map<String, Any>) {
+class FCPListItem(obj: Map<String, Any>) {
 
     /// The underlying CPListItem instance.
     private lateinit var _super: CPListItem

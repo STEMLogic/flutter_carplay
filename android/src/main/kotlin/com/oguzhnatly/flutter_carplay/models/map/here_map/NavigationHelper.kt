@@ -37,7 +37,6 @@ import com.here.sdk.trafficawarenavigation.DynamicRoutingEngineOptions
 import com.here.sdk.trafficawarenavigation.DynamicRoutingListener
 import com.here.time.Duration
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
-import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
 
 /**
@@ -46,7 +45,7 @@ import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
  * The preferred device language determines the language for voice notifications used for TTS.
  * (Make sure to set language + region in device settings.)
  */
-class NavigationHelper(val mapView: MapSurface) {
+class NavigationHelper(private val mapView: MapSurface) {
     private var visualNavigator: VisualNavigator
     private lateinit var dynamicRoutingEngine: DynamicRoutingEngine
 
@@ -72,8 +71,8 @@ class NavigationHelper(val mapView: MapSurface) {
         get() = herePositioningProvider.lastKnownLocation
 
     /// FCP Map View Controller instance
-    val fcpMapViewController: FCPMapViewController?
-        get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.fcpMapViewController
+    private val fcpMapViewController: FCPMapViewController?
+        get() = FlutterCarplayPlugin.rootViewController as? FCPMapViewController
 
     init {
         try {
@@ -82,9 +81,6 @@ class NavigationHelper(val mapView: MapSurface) {
         } catch (e: InstantiationErrorException) {
             throw RuntimeException("Initialization of VisualNavigator failed: " + e.error.name)
         }
-
-        // This enables a navigation view including a rendered navigation arrow.
-        visualNavigator.startRendering(mapView)
 
         createDynamicRoutingEngine()
 
@@ -285,7 +281,7 @@ class NavigationHelper(val mapView: MapSurface) {
     }
 
     /** Provides simulated location updates based on the given route. */
-    private fun enableRoutePlayback(route: Route?) {
+    private fun enableRoutePlayback(route: Route) {
         herePositioningProvider.stopLocating()
         herePositioningSimulator.startLocating(visualNavigator, route)
     }

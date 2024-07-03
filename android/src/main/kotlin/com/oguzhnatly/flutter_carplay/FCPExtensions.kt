@@ -11,7 +11,13 @@ import androidx.car.app.model.CarIcon
  * @return A new UIImage with the color tint applied.
  */
 fun UIImage.withColor(color: Long, colorDark: Long? = null): UIImage {
-    return CarIcon.Builder(this).setTint(
-        CarColor.createCustom(color.toInt(), (colorDark ?: color).toInt())
-    ).build()
+    return CarIcon.Builder(this)
+        .setTint(CarColor.createCustom(color.toInt(), (colorDark ?: color).toInt()))
+        .build()
+}
+
+fun String.snakeToLowerCamelCase(): String {
+    return split("_").joinToString("") { word ->
+        word.lowercase().replaceFirstChar { it.uppercase() }
+    }.replaceFirstChar { it.lowercase() }
 }

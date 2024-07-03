@@ -33,19 +33,22 @@ class FCPSpeechRecognizer {
     }
 
     /** A nested class assisting in speech recognition tasks. */
-    private inner class FCPSpeechAssist {
+    inner class FCPSpeechAssist {
         var speechRecognizer: SpeechRecognizer? = null
         var recognizerIntent: Intent? = null
 
-        init {
-            speechRecognizer =
-                SpeechRecognizer.createSpeechRecognizer(AndroidAutoService.session?.carContext)
-            recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(
-                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                )
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        /** Initializes the text-to-speech manager and sets itself as the delegate for the TextToSpeech.*/
+        fun initializeRecognizer() {
+            AndroidAutoService.session?.carContext?.let {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(it)
+
+                recognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(
+                        RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                        RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                    )
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                }
             }
         }
 
@@ -73,7 +76,7 @@ class FCPSpeechRecognizer {
     private val transcript = FCPSpeechTranscript()
 
     /// An instance of FCPSpeechAssist assisting in speech recognition tasks.
-    private val assistant = FCPSpeechAssist()
+    val assistant = FCPSpeechAssist()
 
     /** Initiates the speech recognition process.
      *

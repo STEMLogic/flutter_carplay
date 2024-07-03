@@ -129,13 +129,14 @@ class NavigationEventHandler: NavigableLocationDelegate,
     /// - Parameter routeProgress: The current route progress.
     func onRouteProgressUpdated(_ routeProgress: RouteProgress) {
         // [SectionProgress] is guaranteed to be non-empty.
-        let distanceToDestination = routeProgress.sectionProgress.last?.remainingDistanceInMeters ?? Int32(0)
+        let lastSectionProgress = routeProgress.sectionProgress.last
+        let distanceToDestination = lastSectionProgress?.remainingDistanceInMeters ?? Int32(0)
         print("Distance to destination in meters: \(distanceToDestination)")
 
-        let timeToDestination = routeProgress.sectionProgress.last?.remainingDuration ?? TimeInterval()
+        let timeToDestination = lastSectionProgress?.remainingDuration ?? TimeInterval()
         print("Duration to destination: \(timeToDestination)")
 
-        let trafficDelayAhead = routeProgress.sectionProgress.last?.trafficDelay ?? TimeInterval()
+        let trafficDelayAhead = lastSectionProgress?.trafficDelay ?? TimeInterval()
         print("Traffic delay ahead in seconds: \(trafficDelayAhead)")
 
         // Contains the progress for the next maneuver ahead and the next-next maneuvers, if any.
@@ -201,6 +202,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Show primary maneuver
+    ///
     /// - Parameters:
     ///   - maneuver: maneuver
     ///   - initialTravelEstimates: initial travel estimates
@@ -214,8 +216,6 @@ class NavigationEventHandler: NavigableLocationDelegate,
         /// Get the action text for the primary maneuver from the main application.
         primaryManeuverActionTextHandler = { [weak self] actionText in
             guard let self = self else { return }
-
-            print("Primary maneuver: \(actionText)")
 
             // Create CPManeuver instance and set appropriate properties
             let cpManeuver = CPManeuver()
@@ -253,6 +253,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Show secondary maneuver
+    ///
     /// - Parameter maneuver: maneuver
     func showSecondaryManeuver(maneuver: Maneuver) {
         let action = String(describing: maneuver.action)
@@ -263,7 +264,6 @@ class NavigationEventHandler: NavigableLocationDelegate,
         /// Get the action text for the secondary maneuver from the main application.
         secondaryManeuverActionTextHandler = { [weak self] actionText in
             guard let self = self else { return }
-            print("Secondary maneuver: \(actionText)")
 
             let maneuverTextArr = maneuver.text.components(separatedBy: " ")
             let formattedManeuverText = maneuverTextArr.count > 3 ? Array(maneuverTextArr.prefix(3)).joined(separator: " ").appending("...") : maneuver.text
@@ -302,6 +302,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Update estimates
+    ///
     /// - Parameters:
     ///   - initialTravelEstimates: initial travel estimates
     ///   - travelEstimates: travel estimates
@@ -316,6 +317,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Returns the road name for the specified maneuver.
+    ///
     /// - Parameter maneuver: The maneuver to get the road name for.
     /// - Returns: The road name for the specified maneuver.
     func getRoadName(maneuver: Maneuver) -> String? {
@@ -327,17 +329,17 @@ class NavigationEventHandler: NavigableLocationDelegate,
         let nextRoadName = nextRoadTexts.names.defaultValue()
         let nextRoadNumber = nextRoadTexts.numbersWithDirection.defaultValue()
 
-        var roadName = nextRoadName == nil ? nextRoadNumber : nextRoadName
+        var roadName = nextRoadName ?? nextRoadNumber
 
         // On highways, we want to show the highway number instead of a possible road name,
         // while for inner city and urban areas road names are preferred over road numbers.
         if maneuver.nextRoadType == RoadType.highway {
-            roadName = nextRoadNumber == nil ? nextRoadName : nextRoadNumber
+            roadName = nextRoadNumber ?? nextRoadName
         }
 
         if maneuver.action == ManeuverAction.arrive {
             // We are approaching destination, so there's no next road.
-            roadName = currentRoadName == nil ? currentRoadNumber : currentRoadName
+            roadName = currentRoadName ?? currentRoadNumber
         }
 
         // Nil happens only in rare cases, when also the fallback above is nil.
@@ -345,6 +347,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     }
 
     /// Get measurement from distance in meters.
+    ///
     /// - Parameter distanceInMeters: The distance in meters.
     /// - Returns: The measurement in the appropriate unit.
     func getMeasurement(distanceInMeters: Int32) -> Measurement<UnitLength> {
@@ -477,7 +480,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
     func onRouteDeviation(_ routeDeviation: RouteDeviation) {
         print("onRouteDeviation: \(routeDeviation)")
         guard let route = visualNavigator.route else {
-            // May happen in rare cases when route was set to nil inbetween.
+            // May happen in rare cases when route was set to nil in between.
             return
         }
 
@@ -920,6 +923,7 @@ class NavigationEventHandler: NavigableLocationDelegate,
         // used enUS as the default language
         // let ttsLanguageCode = getLanguageCodeForDevice(supportedVoiceSkins: VisualNavigator.availableLanguagesForManeuverNotifications())
         let ttsLanguageCode = LanguageCode.enUs
+
         visualNavigator.maneuverNotificationOptions = ManeuverNotificationOptions(language: ttsLanguageCode,
                                                                                   unitSystem: UnitSystem.metric)
 
@@ -928,9 +932,9 @@ class NavigationEventHandler: NavigableLocationDelegate,
         // Set language to our TextToSpeech engine.
         let locale = LanguageCodeConverter.getLocale(languageCode: ttsLanguageCode)
         if voiceAssistant.setLanguage(locale: locale) {
-            print("TextToSpeech engine uses this language: \(locale)")
+            MemoryLogger.shared.appendEvent("TextToSpeech engine uses this language: \(locale)")
         } else {
-            print("TextToSpeech engine does not support this language: \(locale)")
+            MemoryLogger.shared.appendEvent("TextToSpeech engine does not support this language: \(locale)")
         }
     }
 
