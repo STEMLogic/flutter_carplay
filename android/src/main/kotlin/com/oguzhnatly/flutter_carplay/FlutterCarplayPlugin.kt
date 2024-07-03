@@ -1098,9 +1098,7 @@ private fun FlutterCarplayPlugin.Companion.updateListTemplate(
 ) {
     // Find the list template based on the provided element ID
     findListTemplate(elementId) { listTemplate ->
-
         // Extract and handle the data for updating the list template
-        val isLoading = args["isLoading"] as? Bool
         val emptyViewTitleVariants = args["emptyViewTitleVariants"] as? List<String>
         val emptyViewSubtitleVariants = args["emptyViewSubtitleVariants"] as? List<String>
 
@@ -1116,7 +1114,6 @@ private fun FlutterCarplayPlugin.Companion.updateListTemplate(
 
         // Update the list template with the extracted data
         listTemplate.update(
-            isLoading = isLoading,
             emptyViewTitleVariants = emptyViewTitleVariants,
             emptyViewSubtitleVariants = emptyViewSubtitleVariants,
             sections = sections.map { FCPListSection(it) },
