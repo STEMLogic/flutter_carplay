@@ -18,7 +18,6 @@ import com.oguzhnatly.flutter_carplay.models.alert.FCPAlertAction
  * @param obj A map containing information about the action sheet template.
  */
 class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
-
     /// The underlying CPActionSheetTemplate instance.
     private lateinit var _super: CPTemplate
 
@@ -34,6 +33,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     /// An array of FCPAlertAction instances associated with the action sheet template.
     private var objcActions: List<FCPAlertAction>
 
+    /// Indicates whether the action sheet template is a long message.
     private var isLongMessage: Bool = false
 
     init {
@@ -46,7 +46,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
             FCPAlertAction(it)
         } ?: emptyList()
         actions = objcActions.map { it.getTemplate() }
-        isLongMessage = obj["isLongMessage"] as Boolean
+        isLongMessage = obj["isLongMessage"] as? Boolean ?: false
     }
 
     /** Returns the underlying CPTemplate instance configured with the specified properties. */

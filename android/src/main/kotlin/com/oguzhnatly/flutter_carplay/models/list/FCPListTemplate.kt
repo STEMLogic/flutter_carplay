@@ -52,7 +52,7 @@ class FCPListTemplate(
 
     /// Indicates whether the list template is loading.
     private val isLoading: Bool
-        get() = emptyViewSubtitleVariants.first() == Constants.LOADING
+        get() = emptyViewSubtitleVariants.firstOrNull() == Constants.LOADING
 
     /// The back button associated with the list template (optional).
     private var objcBackButton: FCPBarButton? = null
@@ -77,7 +77,6 @@ class FCPListTemplate(
         emptyViewTitleVariants = obj["emptyViewTitleVariants"] as? List<String> ?: emptyList()
         emptyViewSubtitleVariants = obj["emptyViewSubtitleVariants"] as? List<String> ?: emptyList()
         showsTabBadge = obj["showsTabBadge"] as? Bool ?: false
-        //isLoading = obj["isLoading"] as? Bool ?: false
         objcSections =
             (obj["sections"] as? List<Map<String, Any>> ?: emptyList<FCPListSection>()).map {
                 FCPListSection(it as Map<String, Any>)
@@ -104,12 +103,15 @@ class FCPListTemplate(
     override fun getTemplate(): CPListTemplate {
         // Implementation details for returning CPListTemplate instance
         val listTemplate = ListTemplate.Builder().setLoading(isLoading)
+
         when {
-            sections.count() == 1 && sections.first().itemList.items.isEmpty() -> listTemplate.setSingleList(
-                ItemList.Builder()
-                    .setNoItemsMessage(if (emptyViewSubtitleVariants.isNotEmpty()) emptyViewSubtitleVariants.first() else "No Items")
-                    .build()
-            )
+            sections.count() == 1 && sections.first().itemList.items.isEmpty() -> {
+                if (!isLoading) {
+                    val builder = ItemList.Builder()
+                    emptyViewSubtitleVariants.firstOrNull()?.let { builder.setNoItemsMessage(it) }
+                    listTemplate.setSingleList(builder.build())
+                }
+            }
 
             sections.count() == 1 && sections.first().header.toCharSequence()
                 .isBlank() -> listTemplate.setSingleList(sections.first().itemList)
@@ -125,7 +127,7 @@ class FCPListTemplate(
             for (button in leadingNavigationBarButtons) {
                 actionStrip.addAction(button.getTemplate())
             }
-            for (button in trailingNavigationBarButtons) {
+            for (button in trailingNavigationBarButtons.reversed()) {
                 actionStrip.addAction(button.getTemplate())
             }
             listTemplate.setActionStrip(actionStrip.build())
@@ -152,17 +154,14 @@ class FCPListTemplate(
      * @param sections The new array of FCPListSection instances.
      * @param leadingNavigationBarButtons The new array of leading navigation bar buttons.
      * @param trailingNavigationBarButtons The new array of trailing navigation bar buttons.
-     * @param isLoading The new loading state of the list template.
      */
     fun update(
-        isLoading: Bool? = null,
         emptyViewTitleVariants: List<String>? = null,
         emptyViewSubtitleVariants: List<String>? = null,
         sections: List<FCPListSection>? = null,
         leadingNavigationBarButtons: List<FCPBarButton>? = null,
         trailingNavigationBarButtons: List<FCPBarButton>? = null,
     ) {
-        //isLoading?.let { this.isLoading = it }
         emptyViewTitleVariants?.let { this.emptyViewTitleVariants = it }
         emptyViewSubtitleVariants?.let { this.emptyViewSubtitleVariants = it }
         leadingNavigationBarButtons?.let { this.leadingNavigationBarButtons = it }
