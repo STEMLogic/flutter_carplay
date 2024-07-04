@@ -49,14 +49,8 @@ class FCPMapViewController : SurfaceCallback {
     val mapView: MapSurface?
         get() = if (mapSurface.isValid) mapSurface else null
 
-    //    /// The banner view associated with the map view controller.
-    //    var bannerView: FCPBannerView
-    //    {
-    //        didSet {
-    //            guard let view = bannerView else { return }
-    //            view.isHidden = true
-    //        }
-    //    }
+    /// The banner view associated with the map view controller.
+    val bannerView= FCPBannerView()
     //
     //    /// The toast view associated with the map view controller.
     //    @IBOutlet
@@ -78,9 +72,8 @@ class FCPMapViewController : SurfaceCallback {
     //    @IBOutlet
     //    var overlayViewMaxWidth: NSLayoutConstraint!
     //
-    //    /// The overlay view associated with the map view controller.
-    //    @IBOutlet
-    //    var overlayView: FCPOverlayView!
+    /// The overlay view associated with the map view controller.
+    val overlayView= FCPOverlayView()
     //    {
     //        didSet {
     //            guard let view = overlayView else { return }
@@ -92,7 +85,7 @@ class FCPMapViewController : SurfaceCallback {
     //    }
 
     private var stableArea = Rect(0, 0, 0, 0)
-    private var visibleArea = Rect(0, 0, 0, 0)
+    var visibleArea = Rect(0, 0, 0, 0)
 
     /// The app associated with the map view controller.
     var mapController: MapController? = null
@@ -199,7 +192,7 @@ class FCPMapViewController : SurfaceCallback {
     override fun onStableAreaChanged(stableArea: Rect) {
         this.stableArea = stableArea
 
-        updateCameraPrincipalPoint()
+        //updateCameraPrincipalPoint()
     }
 
     /**
@@ -209,8 +202,10 @@ class FCPMapViewController : SurfaceCallback {
      */
     override fun onVisibleAreaChanged(visibleArea: Rect) {
         this.visibleArea = visibleArea
+        bannerView.getView()
+        overlayView.getView()
 
-        updateCameraPrincipalPoint()
+        //updateCameraPrincipalPoint()
     }
 
     /**
@@ -402,7 +397,6 @@ class FCPMapViewController : SurfaceCallback {
         }
     }
 
-
     /**
      * Look at the area containing all the markers.
      *
@@ -463,7 +457,7 @@ class FCPMapViewController : SurfaceCallback {
     }
 
     /** Update the camera principal point */
-    private fun updateCameraPrincipalPoint() {
+    fun updateCameraPrincipalPoint() {
         //            val scale = FlutterCarplayTemplateManager.carWindow?.screen.scale ?? 1.0
         //            val topSafeArea = view.safeAreaInsets.top * scale
         //            val bottomSafeArea = view.safeAreaInsets.bottom * scale
@@ -549,23 +543,24 @@ class FCPMapViewController : SurfaceCallback {
  * @param message The message to display.
  * @param color The color of the banner.
  */
-// fun FCPMapViewController.showBanner(message: String, color: Int) {
-//    shouldShowBanner = true
-//    bannerView.setMessage(message)
-//    bannerView.setBackgroundColor(color)
-//    bannerView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
-//
-//    if (!isDashboardSceneActive && bannerViewHeight != bannerView.bounds.height) {
-//        bannerViewHeight = bannerView.bounds.height
-//        updateCameraPrincipalPoint()
-//    }
-// }
+fun FCPMapViewController.showBanner(message: String, color: Long) {
+    println("INSIDE SHOW BANNER")
+    shouldShowBanner = true
+    bannerView.setMessage(message)
+    bannerView.setBackgroundColor(color)
+    bannerView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
+
+    if (!isDashboardSceneActive && bannerViewHeight != bannerView.viewHeight) {
+        bannerViewHeight = bannerView.viewHeight
+        updateCameraPrincipalPoint()
+    }
+}
 
 /** Hides the banner message at the top of the screen. */
-// fun FCPMapViewController.hideBanner () {
-//    bannerView.isHidden = true
-//    shouldShowBanner = false
-// }
+ fun FCPMapViewController.hideBanner() {
+    bannerView.isHidden = true
+    shouldShowBanner = false
+ }
 
 /**
  * Displays a toast message on the screen for a specified duration.
@@ -605,37 +600,37 @@ class FCPMapViewController : SurfaceCallback {
  * @param secondaryTitle The secondary title of the overlay view.
  * @param subtitle The subtitle of the overlay view.
  */
-// fun FCPMapViewController.showOverlay (primaryTitle: String?, secondaryTitle: String?, subtitle:
-// String?) {
-//    shouldShowOverlay = true
-//    overlayViewMaxWidth.constant = view.bounds.size.width * 0.65
-//
-//    primaryTitle?.let {
-//        overlayView.setPrimaryTitle(it)
-//    }
-//    secondaryTitle?.let {
-//        overlayView.setSecondaryTitle(it)
-//    }
-//    subtitle?.let {
-//        overlayView.setSubtitle(it)
-//    }
-//    overlayView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
-//
-//    if (!isDashboardSceneActive && overlayViewWidth != overlayView.bounds.width) {
-//        overlayViewWidth = overlayView.bounds.width
-//        updateCameraPrincipalPoint()
-//    }
-// }
+ fun FCPMapViewController.showOverlay (primaryTitle: String?, secondaryTitle: String?, subtitle:
+ String?) {
+    shouldShowOverlay = true
+    //overlayViewMaxWidth.constant = view.bounds.size.width * 0.65
+
+    primaryTitle?.let {
+        overlayView.setPrimaryTitle(it)
+    }
+    secondaryTitle?.let {
+        overlayView.setSecondaryTitle(it)
+    }
+    subtitle?.let {
+        overlayView.setSubtitle(it)
+    }
+    overlayView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
+
+    if (!isDashboardSceneActive && overlayViewWidth != overlayView.viewWidth) {
+        overlayViewWidth = overlayView.viewWidth
+        updateCameraPrincipalPoint()
+    }
+ }
 
 /** Hides the overlay view on the screen. */
-// fun FCPMapViewController.hideOverlay () {
-//    overlayView.setPrimaryTitle("00:00:00")
-//    overlayView.setSecondaryTitle("--")
-//    overlayView.setSubtitle("--")
-//    overlayView.isHidden = true
-//    overlayViewWidth = 0.0
-//    shouldShowOverlay = false
-// }
+ fun FCPMapViewController.hideOverlay () {
+    overlayView.setPrimaryTitle("00:00:00")
+    overlayView.setSecondaryTitle("--")
+    overlayView.setSubtitle("--")
+    overlayView.isHidden = true
+    overlayViewWidth = 0.0
+    shouldShowOverlay = false
+ }
 
 /** Hide all the subviews. */
 // fun FCPMapViewController.hideSubviews () {
