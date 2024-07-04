@@ -149,6 +149,10 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setVoiceControl.name -> {
+                if(AndroidAutoService.session == null) {
+                    result.success(false)
+                    return
+                }
                 val args = call.arguments as? Map<String, Any>
                 val rootTemplateArgs = args?.get("rootTemplate") as? Map<String, Any>
                 if (args == null || rootTemplateArgs == null) {
@@ -158,18 +162,19 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
                 val showVoiceTemplate = {
                     val voiceControlTemplate = FCPVoiceControlTemplate(rootTemplateArgs)
-                    fcpPresentTemplate = voiceControlTemplate
                     AndroidAutoService.session?.presentTemplate(template = voiceControlTemplate)
                     FCPStreamHandlerPlugin.sendEvent(
                         type = FCPChannelTypes.onPresentStateChanged.name,
                         data = mapOf("completed" to true)
                     )
                     result.success(true)
+                    fcpPresentTemplate = voiceControlTemplate
+
                 }
 
                 if (fcpPresentTemplate != null) {
                     fcpPresentTemplate = null
-                    AndroidAutoService.session?.closePresent(result)
+                    AndroidAutoService.session?.closePresent()
                     showVoiceTemplate()
                 } else {
                     showVoiceTemplate()
@@ -379,6 +384,10 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setAlert.name -> {
+                if(AndroidAutoService.session == null) {
+                    result.success(false)
+                    return
+                }
                 val args = call.arguments as? Map<String, Any>
                 val rootTemplateArgs = args?.get("rootTemplate") as? Map<String, Any>
                 if (args == null || rootTemplateArgs == null) {
@@ -388,18 +397,18 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
                 val showAlertTemplate = {
                     val alertTemplate = FCPAlertTemplate(rootTemplateArgs)
-                    fcpPresentTemplate = alertTemplate
                     AndroidAutoService.session?.presentTemplate(template = alertTemplate)
                     FCPStreamHandlerPlugin.sendEvent(
                         type = FCPChannelTypes.onPresentStateChanged.name,
                         data = mapOf("completed" to true)
                     )
                     result.success(true)
+                    fcpPresentTemplate = alertTemplate
                 }
 
                 if (fcpPresentTemplate != null) {
                     fcpPresentTemplate = null
-                    AndroidAutoService.session?.closePresent(result)
+                    AndroidAutoService.session?.closePresent()
                     showAlertTemplate()
                 } else {
                     showAlertTemplate()
@@ -407,6 +416,10 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setActionSheet.name -> {
+                if(AndroidAutoService.session == null) {
+                    result.success(false)
+                    return
+                }
                 val args = call.arguments as? Map<String, Any>
                 val rootTemplateArgs = args?.get("rootTemplate") as? Map<String, Any>
                 if (args == null || rootTemplateArgs == null) {
@@ -416,15 +429,16 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
                 val showActionSheet = {
                     val actionSheetTemplate = FCPActionSheetTemplate(rootTemplateArgs)
-                    fcpPresentTemplate = actionSheetTemplate
                     AndroidAutoService.session?.presentTemplate(
                         template = actionSheetTemplate, result = result
                     )
+                    fcpPresentTemplate = actionSheetTemplate
+
                 }
 
                 if (fcpPresentTemplate != null) {
                     fcpPresentTemplate = null
-                    AndroidAutoService.session?.closePresent(result)
+                    AndroidAutoService.session?.closePresent()
                     showActionSheet()
                 } else {
                     showActionSheet()

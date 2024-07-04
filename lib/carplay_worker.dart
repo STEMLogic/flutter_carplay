@@ -602,8 +602,8 @@ class FlutterCarplay {
       FCPChannelTypes.getConfig.name,
     );
     return {
-      'maximumItemCount': config['maximumItemCount'],
-      'maximumSectionCount': config['maximumSectionCount'],
+      'maximumItemCount': config?['maximumItemCount'],
+      'maximumSectionCount': config?['maximumSectionCount'],
     };
   }
 }

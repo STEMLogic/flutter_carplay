@@ -1,15 +1,19 @@
 package com.oguzhnatly.flutter_carplay.models.list
 
 import androidx.car.app.model.Action
+import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row
+import androidx.core.graphics.drawable.IconCompat
+import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CGFloat
 import com.oguzhnatly.flutter_carplay.CPListItem
 import com.oguzhnatly.flutter_carplay.CPListItemAccessoryType
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
+import com.oguzhnatly.flutter_carplay.R
 import com.oguzhnatly.flutter_carplay.UIImage
 import com.oguzhnatly.flutter_carplay.UIImageObject
 
@@ -117,7 +121,10 @@ class FCPListItem(obj: Map<String, Any>) {
         when (accessoryType) {
             CPListItemAccessoryType.disclosureIndicator -> {
                 builder.addAction(
-                    Action.Builder().setIcon(CarIcon.BACK).setOnClickListener(onClick).build()
+                    Action.Builder().setIcon(CarIcon.Builder(
+                        IconCompat.createWithResource(
+                            AndroidAutoService.session?.carContext,
+                        R.drawable.next)).build()).setOnClickListener(onClick).build()
                 )
             }
 

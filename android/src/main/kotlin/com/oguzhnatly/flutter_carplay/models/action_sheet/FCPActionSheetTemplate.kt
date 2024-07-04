@@ -59,7 +59,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun longMessageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            LongMessageTemplate.Builder(message?:"").setTitle(title?:"")
+            LongMessageTemplate.Builder(message?:" ").setTitle(title?:" ")
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
@@ -79,7 +79,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun messageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            MessageTemplate.Builder(message?:"").setTitle(title?:"").setIcon(CarIcon.ALERT)
+            MessageTemplate.Builder(message?:" ").setTitle(title?:" ").setIcon(CarIcon.ALERT)
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
