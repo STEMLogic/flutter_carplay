@@ -1,6 +1,7 @@
 package com.oguzhnatly.flutter_carplay.models.list
 
 import androidx.car.app.model.Action
+import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row

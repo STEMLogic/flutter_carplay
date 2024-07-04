@@ -1,6 +1,7 @@
 package com.oguzhnatly.flutter_carplay
 
 import android.content.Intent
+import android.content.res.Configuration
 import androidx.car.app.AppManager
 import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
@@ -8,12 +9,14 @@ import androidx.car.app.Session
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
+import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.FlutterEngineCache
 import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+
 
 /**
  * A class representing an Android Auto session in the Flutter CarPlay plugin.
@@ -98,15 +101,18 @@ class AndroidAutoSession : Session() {
                     Logger.log("onStop")
                     FlutterCarplayTemplateManager.fcpConnectionStatus =
                         FCPConnectionTypes.DISCONNECTED
+
                     super.onStop(owner)
                 }
 
                 override fun onDestroy(owner: LifecycleOwner) {
                     Logger.log("onDestroy")
+
                     super.onDestroy(owner)
                 }
             }
         )
+
         FCPSpeaker.initializeTTS()
 
         FlutterCarplayPlugin.rootViewController?.let {
@@ -114,6 +120,13 @@ class AndroidAutoSession : Session() {
         }
 
         return (FlutterCarplayPlugin.fcpRootTemplate ?: RootTemplate()).toScreen(carContext)
+    }
+
+    /** Called when the car configuration changes. */
+    override fun onCarConfigurationChanged(newConfiguration: Configuration) {
+        super.onCarConfigurationChanged(newConfiguration)
+
+        (FlutterCarplayPlugin.rootViewController as? FCPMapViewController)?.onCarConfigurationChanged()
     }
 
     /**

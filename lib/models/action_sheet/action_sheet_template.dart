@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:uuid/uuid.dart';
 
 import '../alert/alert_action.dart';
@@ -14,6 +16,8 @@ class CPActionSheetTemplate extends CPPresentTemplate {
   /// The descriptive message providing details about the reason for displaying the action sheet.
   final String? message;
 
+  final bool? isLongMessage;
+
   /// The list of actions as [CPAlertAction] available on the action sheet.
   final List<CPAlertAction> actions;
 
@@ -24,6 +28,7 @@ class CPActionSheetTemplate extends CPPresentTemplate {
     super.routeName,
     this.message,
     this.title,
+    this.isLongMessage
   });
 
   Map<String, dynamic> toJson() => {
@@ -31,6 +36,7 @@ class CPActionSheetTemplate extends CPPresentTemplate {
         'title': title,
         'message': message,
         'actions': actions.map((e) => e.toJson()).toList(),
+        'isLongMessage': isLongMessage,
       };
 
   String get uniqueId {

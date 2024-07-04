@@ -42,8 +42,8 @@ class RouteCalculator(isOfflineMode: Bool = false) {
     /**
      * Calculates a route between two waypoints.
      *
-     * @param start          The starting waypoint.
-     * @param destination    The destination waypoint.
+     * @param start The starting waypoint.
+     * @param destination The destination waypoint.
      * @param calculateRouteCallback The completion callback.
      */
     fun calculateRoute(
@@ -59,6 +59,6 @@ class RouteCalculator(isOfflineMode: Bool = false) {
         val routingOptions = CarOptions()
         routingOptions.routeOptions.enableRouteHandle = true
 
-        routingEngine!!.calculateRoute(waypoints, routingOptions, calculateRouteCallback!!)
+        routingEngine?.calculateRoute(waypoints, routingOptions, calculateRouteCallback!!)
     }
 }
