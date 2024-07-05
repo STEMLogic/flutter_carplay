@@ -18,6 +18,7 @@
  */
 package com.oguzhnatly.flutter_carplay.models.map.here_map
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.DateTimeWithZone
@@ -174,6 +175,8 @@ class MapController(private val mapView: MapSurface) {
      * @param markerSize The size of the marker
      * @param metadata The metadata of the marker
      */
+//    @SuppressLint("RestrictedApi")
+    @SuppressLint("RestrictedApi")
     fun addMapMarker(
         coordinates: GeoCoordinates,
         markerImage: UIImage,
@@ -567,6 +570,7 @@ class MapController(private val mapView: MapSurface) {
 //        builder.setTitle(title).setMessage(message).show()
     }
 
+    /** Detach the map controller. */
     fun detach() {
         // Disables TBT guidance (if running) and enters tracking mode.
         navigationHelper.stopNavigation()

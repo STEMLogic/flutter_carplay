@@ -74,6 +74,7 @@ import com.here.sdk.routing.ManeuverAction
 import com.here.sdk.routing.RoadType
 import com.here.sdk.routing.Waypoint
 import com.here.sdk.trafficawarenavigation.DynamicRoutingEngine
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPTravelEstimates
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
@@ -96,12 +97,14 @@ import androidx.car.app.navigation.model.Maneuver as CarManeuver
  * Note that this class does not show an exhaustive list of all possible events.
  */
 class NavigationEventHandler {
+    /// Maneuver index of the previous maneuver.
     private var previousManeuverIndex = -1
-    private var lastMapMatchedLocation: MapMatchedLocation? = null
-    private val voiceAssistant = FCPSpeaker
 
-    /// The voice instructions toggle button.
-    private var isVoiceInstructionsMuted = false
+    /// The last map matched location.
+    private var lastMapMatchedLocation: MapMatchedLocation? = null
+
+    /// The voice assistant instance.
+    private val voiceAssistant = FCPSpeaker
 
     /// Check if a rerouting is in progress.
     private var isReroutingInProgress = false
@@ -116,6 +119,13 @@ class NavigationEventHandler {
     /// FCP Map View Controller instance
     private val fcpMapViewController: FCPMapViewController?
         get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.fcpMapViewController
+
+    /// The voice instructions toggle button.
+    private var isVoiceInstructionsMuted: Bool
+        get() = fcpMapViewController?.isVoiceInstructionsMuted ?: false
+        set(value) {
+            fcpMapViewController?.isVoiceInstructionsMuted = value
+        }
 
     init {
         // Toggle voice instructions handler

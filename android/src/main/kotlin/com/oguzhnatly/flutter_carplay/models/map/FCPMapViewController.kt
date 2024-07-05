@@ -1,6 +1,8 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
 import android.graphics.Rect
+import android.os.Handler
+import android.os.Looper
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.SurfaceContainer
 import com.here.sdk.core.Anchor2D
@@ -43,14 +45,14 @@ import kotlin.math.min
 
 /** A custom Android Auto map view controller. */
 class FCPMapViewController : SurfaceCallback {
-    /// The map view associated with the map view controller.
-    private val mapSurface = MapSurface()
+    /// The private map surface instance.
+    private var mapSurface: MapSurface? = null
 
-    val mapView: MapSurface?
-        get() = if (mapSurface.isValid) mapSurface else null
+    /// The map view associated with the map view controller.
+    var mapView: MapSurface? = null
 
     /// The banner view associated with the map view controller.
-    val bannerView= FCPBannerView()
+    val bannerView = FCPBannerView()
     //
     //    /// The toast view associated with the map view controller.
     //    @IBOutlet
@@ -64,27 +66,16 @@ class FCPMapViewController : SurfaceCallback {
     //        }
     //    }
 
-    //    /// The maximum width of the toast view.
-    //    @IBOutlet
-    //    var toastViewMaxWidth: NSLayoutConstraint!
-    //
-    //    /// The maximum width of the overlay view.
-    //    @IBOutlet
-    //    var overlayViewMaxWidth: NSLayoutConstraint!
-    //
     /// The overlay view associated with the map view controller.
-    val overlayView= FCPOverlayView()
-    //    {
-    //        didSet {
-    //            guard let view = overlayView else { return }
-    //            view.backgroundColor = . clear
-    //                    view.clipsToBounds = true
-    //            view.layer.cornerRadius = 8
-    //            view.isHidden = true
-    //        }
-    //    }
+    val overlayView = FCPOverlayView()
 
+    /// The trip preview associated with the map view controller.
+    val tripPreview = FCPTripPreview()
+
+    /// The stable area associated with the map view controller.
     private var stableArea = Rect(0, 0, 0, 0)
+
+    /// The visible area associated with the map view controller.
     var visibleArea = Rect(0, 0, 0, 0)
 
     /// The app associated with the map view controller.
@@ -94,10 +85,10 @@ class FCPMapViewController : SurfaceCallback {
     val markerPinSize: Double
         get() = 40 * (mapView?.pixelScale ?: 1.0)
 
-    /// Recenter map position to adjust the map camera
+    /// Recenter map position to adjust the map camera.
     private var recenterMapPosition = "initialMarker"
 
-    /// Map coordinates to render marker on the map
+    /// Map coordinates to render marker on the map.
     var mapCoordinates = MapCoordinates()
 
     /// Whether the satellite view is enabled.
@@ -112,29 +103,38 @@ class FCPMapViewController : SurfaceCallback {
         get() = (FlutterCarplayPlugin.fcpRootTemplate as?
                 FCPMapTemplate)?.isPanningInterfaceVisible ?: false
 
-    /// Should stop voice assistant
+    /// Should stop voice assistant.
     var shouldStopVoiceAssistant = true
 
-    /// Should show banner
+    /// The voice instructions toggle button.
+    var isVoiceInstructionsMuted = false
+
+    /// Should show banner.
     var shouldShowBanner = false
 
-    /// Should show overlay
+    /// Should show overlay.
     var shouldShowOverlay = false
 
-    /// Overlay view width
+    /// Should show trip preview.
+    var shouldShowTripPreview = false
+
+    /// Overlay view width.
     var overlayViewWidth = 0.0
 
-    /// Banner view height
+    /// Trip preview width.
+    var tripPreviewWidth = 0.0
+
+    /// Banner view height.
     var bannerViewHeight = 0.0
 
-    /// To perform actions only once when map is loaded
+    /// To perform actions only once when map is loaded.
     private var mapLoadedOnce = false
 
     /// A debounce object for optimizing surface events.
     private var surfaceDebounce = Debounce(CoroutineScope(Dispatchers.Main))
     private var cameraUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
 
-    /// Default coordinates for the map
+    /// Default coordinates for the map.
 //    val defaultCoordinates = GeoCoordinates(21.1812352, 72.8629248)
     private val defaultCoordinates = GeoCoordinates(-25.02970994781628, 134.28333173662492)
 
@@ -152,10 +152,12 @@ class FCPMapViewController : SurfaceCallback {
         if (!isSurfaceReady(surfaceContainer)) return
 
         surfaceDebounce.debounce(500L) {
+            mapSurface = MapSurface()
             mapLoadedOnce = false
+            mapView = null
 
             AndroidAutoService.session?.carContext.let {
-                mapSurface.setSurface(
+                mapSurface?.setSurface(
                     it,
                     surfaceContainer.surface,
                     surfaceContainer.width,
@@ -163,8 +165,18 @@ class FCPMapViewController : SurfaceCallback {
                 )
             }
 
-            // Load the map scene using a map scheme to render the map with.
-            mapView?.mapScene?.loadScene(MapScheme.NORMAL_DAY, ::onLoadScene)
+            // Wait for the map surface to be valid
+            var count = 0
+            while (mapSurface?.isValid == false) {
+                if (count > 5) break
+
+                Handler(Looper.getMainLooper()).postDelayed(
+                    { count++ },
+                    1000L
+                )
+            }
+
+            if (mapSurface?.isValid == true) mapView = mapSurface
 
             toggleSatelliteViewHandler = { isSatelliteViewEnabled: Bool ->
                 this.isSatelliteViewEnabled = isSatelliteViewEnabled
@@ -183,7 +195,30 @@ class FCPMapViewController : SurfaceCallback {
 
                 mapView?.mapScene?.loadScene(mapScheme, ::onLoadScene)
             }
+
+            // Load the map scene using a map scheme to render the map with.
+            toggleSatelliteViewHandler?.invoke(isSatelliteViewEnabled)
+
+            // Need to call hideSubViews in order to reset the isHidden variable
+            // and show the views again.
+            hideSubviews()
+            showSubviews()
         }
+    }
+
+    /**
+     * Destroys the surface of the map view when the surface is destroyed.
+     *
+     * @param surfaceContainer the surface container that is being destroyed
+     */
+    override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
+        mapSurface?.destroySurface()
+        mapSurface = null
+        mapController?.detach()
+        mapController = null
+        mapView = null
+        (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.resetCarContext()
+        hideSubviews()
     }
 
     /**
@@ -193,6 +228,7 @@ class FCPMapViewController : SurfaceCallback {
      */
     override fun onStableAreaChanged(stableArea: Rect) {
         this.stableArea = stableArea
+        Logger.log("Stable Area Updated: $stableArea")
 
         cameraUpdateDebounce.debounce(500L) {
             updateCameraPrincipalPoint()
@@ -206,8 +242,11 @@ class FCPMapViewController : SurfaceCallback {
      */
     override fun onVisibleAreaChanged(visibleArea: Rect) {
         this.visibleArea = visibleArea
+        Logger.log("Visible Area Updated: $stableArea")
+
         bannerView.getView()
         overlayView.getView()
+        tripPreview.getView()
 
         cameraUpdateDebounce.debounce(500L) {
             updateCameraPrincipalPoint()
@@ -249,14 +288,6 @@ class FCPMapViewController : SurfaceCallback {
         mapView?.gestures?.flingHandler?.onFling(-1 * velocityX, -1 * velocityY)
     }
 
-    /**
-     * Destroys the surface of the map view when the surface is destroyed.
-     *
-     * @param surfaceContainer the surface container that is being destroyed
-     */
-    override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
-        mapSurface.destroySurface()
-    }
 
     /** Called when the car configuration changes. */
     fun onCarConfigurationChanged() {
@@ -268,7 +299,7 @@ class FCPMapViewController : SurfaceCallback {
      *
      * @param mapError The map error, if any.
      */
-    private fun onLoadScene(mapError: MapError?): Unit {
+    private fun onLoadScene(mapError: MapError?) {
         if (mapError != null) {
             Logger.log("Error: Map scene not loaded, $mapError")
             return
@@ -277,8 +308,6 @@ class FCPMapViewController : SurfaceCallback {
         if (mapView == null) return
 
         if (mapController == null) mapController = MapController(mapView!!)
-
-        //        mapView!!.isMultipleTouchEnabled = true
 
         // Disable traffic view support
         mapView!!.mapScene.disableFeatures(
@@ -396,8 +425,11 @@ class FCPMapViewController : SurfaceCallback {
         }
 
         if (!mapLoadedOnce) {
+            mapView?.setWatermarkLocation(
+                Anchor2D(0.0, 1.0),
+                Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
+            )
             flyToCoordinates(defaultCoordinates)
-            toggleSatelliteViewHandler?.invoke(isSatelliteViewEnabled)
             mapLoadedOnce = true
         }
     }
@@ -421,37 +453,32 @@ class FCPMapViewController : SurfaceCallback {
             // bannerView.bounds.height * scale
 
             val topSafeArea = visibleArea.top
-            val leftSafeArea = visibleArea.bottom
-            val rightSafeArea = visibleArea.right
-            val width = visibleArea.width()
-            val height = visibleArea.height()
-            //            val bannerHeight = bannerView . isHidden ? 0.0 : bannerView.bounds.height
-            // * scale
+            val leftSafeArea = visibleArea.left
+            val rightSafeArea = 0.0// visibleArea.right
+            val width = mapView?.viewportSize?.width ?: visibleArea.width().toDouble()
+            val height = mapView?.viewportSize?.height ?: visibleArea.height().toDouble()
+            val bannerHeight = if (bannerView.isHidden) 0.0 else bannerView.height
+            val tripPreviewWidth = if (tripPreview.isHidden) 0.0 else tripPreview.width
 
-            val rectangle2D =
-                if (isDashboardSceneActive)
-                    Rectangle2D(
-                        Point2D(markerPinSize, markerPinSize),
-                        Size2D(width - markerPinSize * 2, height - markerPinSize * 2)
+            val rectangle2D = if (isDashboardSceneActive)
+                Rectangle2D(
+                    Point2D(markerPinSize, markerPinSize),
+                    Size2D(width - markerPinSize * 2, height - markerPinSize * 2)
+                )
+            else
+                Rectangle2D(
+                    Point2D(
+                        leftSafeArea + tripPreviewWidth + markerPinSize,
+                        topSafeArea + bannerHeight + markerPinSize
+                    ),
+                    Size2D(
+                        width -
+                                leftSafeArea -
+                                rightSafeArea -
+                                markerPinSize * 2,
+                        height - topSafeArea - bannerHeight - markerPinSize * 2
                     )
-                else
-                    Rectangle2D(
-                        Point2D(
-                            leftSafeArea + markerPinSize,
-                            topSafeArea + markerPinSize
-                            //                            topSafeArea + bannerHeight
-                            // + markerPinSize
-                        ),
-                        Size2D(
-                            width -
-                                    leftSafeArea -
-                                    rightSafeArea -
-                                    markerPinSize * 2,
-                            height - topSafeArea - markerPinSize * 2
-                            //                            height -topSafeArea -
-                            // bannerHeight - markerPinSize * 2
-                        )
-                    )
+                )
 
             mapView!!.camera.lookAt(
                 geoBox,
@@ -462,7 +489,7 @@ class FCPMapViewController : SurfaceCallback {
     }
 
     /** Update the camera principal point */
-    private fun updateCameraPrincipalPoint() {
+    fun updateCameraPrincipalPoint() {
         //            val scale = FlutterCarplayTemplateManager.carWindow?.screen.scale ?? 1.0
         //            val topSafeArea = view.safeAreaInsets.top * scale
         //            val bottomSafeArea = view.safeAreaInsets.bottom * scale
@@ -476,10 +503,10 @@ class FCPMapViewController : SurfaceCallback {
 
         val topSafeArea = visibleArea.top
         val bottomSafeArea = visibleArea.bottom
-        val leftSafeArea = visibleArea.bottom
-        val rightSafeArea = if (isPanningInterfaceVisible) 0 else visibleArea.right
-        val width = visibleArea.width()
-        val height = visibleArea.height()
+        val leftSafeArea = visibleArea.left
+        val rightSafeArea = if (isPanningInterfaceVisible) 0 else 0
+        val width = mapView?.viewportSize?.width ?: visibleArea.width().toDouble()
+        val height = mapView?.viewportSize?.height ?: visibleArea.height().toDouble()
 
         if (isDashboardSceneActive) {
             val cameraPrincipalPoint = Point2D(width / 2.0, height / 2.0)
@@ -492,34 +519,29 @@ class FCPMapViewController : SurfaceCallback {
 
             mapView!!.setWatermarkLocation(
                 Anchor2D(
-                    (leftSafeArea / width).toDouble(),
-                    ((height - bottomSafeArea) / height).toDouble()
+                    leftSafeArea / width,
+                    bottomSafeArea / height
                 ),
                 Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
             )
         } else {
-            //            val bannerHeight =
-            //                if (bannerView.isHidden) 0.0 else bannerView.bounds.height * scale
-            //            val overlayViewWidth =
-            //                if (overlayView.isHidden) 0.0 else overlayView.bounds.width * scale +
-            // 16.0
+            val bannerHeight = if (bannerView.isHidden) 0.0 else bannerView.height
+            val overlayViewWidth = if (overlayView.isHidden) 0.0 else overlayView.width
+            val tripPreviewWidth = if (tripPreview.isHidden) 0.0 else tripPreview.width
 
-            val cameraPrincipalPoint =
-                Point2D(
-                    leftSafeArea +
-                            overlayViewWidth +
-                            (width - leftSafeArea - rightSafeArea - overlayViewWidth) / 2.0,
-                    topSafeArea + (height - topSafeArea) / 2.0
-                    //                        topSafeArea +bannerHeight + (height -
-                    // topSafeArea - bannerHeight) / 2.0
-                )
+            val cameraPrincipalPoint = Point2D(
+                leftSafeArea +
+                        overlayViewWidth + tripPreviewWidth +
+                        (width - leftSafeArea - rightSafeArea - overlayViewWidth - tripPreviewWidth) / 2.0,
+                topSafeArea + bannerHeight + (height -
+                        topSafeArea - bannerHeight) / 2.0
+            )
             mapView!!.camera.principalPoint = cameraPrincipalPoint
 
-            val anchor2D =
-                Anchor2D(
-                    cameraPrincipalPoint.x / width,
-                    if (isPanningInterfaceVisible) cameraPrincipalPoint.y / height else 0.75
-                )
+            val anchor2D = Anchor2D(
+                cameraPrincipalPoint.x / width,
+                if (isPanningInterfaceVisible) cameraPrincipalPoint.y / height else 0.75
+            )
             mapController?.navigationHelper?.setVisualNavigatorCameraPoint(anchor2D)
 
             if (isPanningInterfaceVisible) {
@@ -530,8 +552,8 @@ class FCPMapViewController : SurfaceCallback {
 
             mapView!!.setWatermarkLocation(
                 Anchor2D(
-                    (leftSafeArea / width).toDouble(),
-                    ((height - bottomSafeArea) / height).toDouble(),
+                    (leftSafeArea + tripPreviewWidth) / width,
+                    bottomSafeArea / height,
                 ),
                 Point2D(
                     mapView!!.watermarkSize.width / 2,
@@ -554,17 +576,17 @@ fun FCPMapViewController.showBanner(message: String, color: Long) {
     bannerView.setBackgroundColor(color)
     bannerView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
 
-    if (!isDashboardSceneActive && bannerViewHeight != bannerView.viewHeight) {
-        bannerViewHeight = bannerView.viewHeight
+    if (!isDashboardSceneActive && bannerViewHeight != bannerView.height) {
+        bannerViewHeight = bannerView.height
         updateCameraPrincipalPoint()
     }
 }
 
 /** Hides the banner message at the top of the screen. */
- fun FCPMapViewController.hideBanner() {
+fun FCPMapViewController.hideBanner() {
     bannerView.isHidden = true
     shouldShowBanner = false
- }
+}
 
 /**
  * Displays a toast message on the screen for a specified duration.
@@ -604,50 +626,82 @@ fun FCPMapViewController.showBanner(message: String, color: Long) {
  * @param secondaryTitle The secondary title of the overlay view.
  * @param subtitle The subtitle of the overlay view.
  */
- fun FCPMapViewController.showOverlay (primaryTitle: String?, secondaryTitle: String?, subtitle:
- String?) {
+fun FCPMapViewController.showOverlay(
+    primaryTitle: String?,
+    secondaryTitle: String?,
+    subtitle: String?,
+) {
     shouldShowOverlay = true
 
-    primaryTitle?.let {
-        overlayView.setPrimaryTitle(it)
-    }
-    secondaryTitle?.let {
-        overlayView.setSecondaryTitle(it)
-    }
-    subtitle?.let {
-        overlayView.setSubtitle(it)
-    }
+    primaryTitle?.let { overlayView.setPrimaryTitle(it) }
+    secondaryTitle?.let { overlayView.setSecondaryTitle(it) }
+    subtitle?.let { overlayView.setSubtitle(it) }
+
     overlayView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
 
-    if (!isDashboardSceneActive && overlayViewWidth != overlayView.viewWidth) {
-        overlayViewWidth = overlayView.viewWidth
+    if (!isDashboardSceneActive && overlayViewWidth != overlayView.width) {
+        overlayViewWidth = overlayView.width
         updateCameraPrincipalPoint()
     }
- }
+}
 
 /** Hides the overlay view on the screen. */
- fun FCPMapViewController.hideOverlay () {
+fun FCPMapViewController.hideOverlay() {
     overlayView.setPrimaryTitle("00:00:00")
     overlayView.setSecondaryTitle("--")
     overlayView.setSubtitle("--")
     overlayView.isHidden = true
     overlayViewWidth = 0.0
     shouldShowOverlay = false
- }
+}
+
+/**
+ * Displays an overlay view on the screen.
+ *
+ * @param primaryTitle The primary title of the overlay view.
+ * @param secondaryTitle The secondary title of the overlay view.
+ */
+fun FCPMapViewController.showTripPreview(
+    primaryTitle: String,
+    secondaryTitle: String,
+) {
+    shouldShowTripPreview = true
+
+    tripPreview.setPrimaryTitle(primaryTitle)
+    tripPreview.setSecondaryTitle(secondaryTitle)
+
+    tripPreview.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
+
+    if (!isDashboardSceneActive && tripPreviewWidth != tripPreview.width) {
+        tripPreviewWidth = tripPreview.width
+        updateCameraPrincipalPoint()
+    }
+}
+
+/** Hides the overlay view on the screen. */
+fun FCPMapViewController.hideTripPreview() {
+    tripPreview.setPrimaryTitle("--")
+    tripPreview.setSecondaryTitle("--")
+    tripPreview.isHidden = true
+    tripPreviewWidth = 0.0
+    shouldShowTripPreview = false
+}
 
 /** Hide all the subviews. */
-// fun FCPMapViewController.hideSubviews () {
-//    bannerView.isHidden = true
-//    overlayView.isHidden = true
-//    updateCameraPrincipalPoint()
-// }
+fun FCPMapViewController.hideSubviews() {
+    bannerView.isHidden = true
+    overlayView.isHidden = true
+    tripPreview.isHidden = true
+    updateCameraPrincipalPoint()
+}
 
 /** Show the subviews. */
-// fun FCPMapViewController.showSubviews() {
-//    bannerView.isHidden = !shouldShowBanner || isPanningInterfaceVisible
-//    overlayView.isHidden = !shouldShowOverlay || isPanningInterfaceVisible
-//    updateCameraPrincipalPoint()
-// }
+fun FCPMapViewController.showSubviews() {
+    bannerView.isHidden = !shouldShowBanner || isPanningInterfaceVisible
+    overlayView.isHidden = !shouldShowOverlay || isPanningInterfaceVisible
+    tripPreview.isHidden = !shouldShowTripPreview || isPanningInterfaceVisible
+    updateCameraPrincipalPoint()
+}
 
 /**
  * Adds an initial marker on the map.

@@ -23,7 +23,7 @@ class FCPRouteChoice(obj: Map<String, Any>) {
     private var selectionSummaryVariants: List<String>
 
     /// The array of additional information variants for this route choice
-    private var additionalInformationVariants: List<String>
+    var additionalInformationVariants: List<String>
 
     init {
         val elementIdValue = obj["_elementId"] as? String

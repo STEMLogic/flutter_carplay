@@ -19,19 +19,22 @@ import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import java.io.ByteArrayOutputStream
 
+/** A custom banner view with a message label for the map view controller. */
 class FCPBannerView {
     private val carContext: CarContext
         get() = AndroidAutoService.session?.carContext!!
-    private var mapImageOverlay: MapImageOverlay? = null
-    private var textView: String? = null
-    private var backgroundColor: Int? = null
-    var viewHeight: Double = 0.0
     private val fcpMapViewController: FCPMapViewController?
         get() = FlutterCarplayPlugin.rootViewController as? FCPMapViewController
     private val mapView: MapSurface?
         get() = fcpMapViewController?.mapView
     private val visibleArea: Rect?
         get() = fcpMapViewController?.visibleArea
+
+    private var mapImageOverlay: MapImageOverlay? = null
+    private var backgroundColor: Int? = null
+    private var textView: String? = null
+
+    var height: Double = 0.0
     var isHidden: Boolean = true
         set(value) {
             if (field == value) return
@@ -41,29 +44,38 @@ class FCPBannerView {
                 } else {
                     mapView?.mapScene?.removeMapImageOverlay(it)
                     mapView?.mapScene?.addMapImageOverlay(it)
+                    fcpMapViewController?.overlayView?.getView()
+                    fcpMapViewController?.tripPreview?.getView()
                 }
             }
             field = value
         }
 
+    /** Get the view for the banner. */
     fun getView() {
         mapView ?: return
         visibleArea ?: return
         val linearLayout = LinearLayout(carContext)
         linearLayout.apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams =
-                LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            addView(View(carContext).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    visibleArea!!.left,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+
+                setBackgroundColor(Color.TRANSPARENT)
+            })
             addView(TextView(carContext).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                width = mapView!!.viewportSize.width.toInt()
-                println(height)
+                width = mapView!!.viewportSize.width.toInt() - visibleArea!!.left
                 text = textView
                 textSize = 24F
                 setTextColor(Color.WHITE)
@@ -72,6 +84,7 @@ class FCPBannerView {
             })
             gravity = android.view.Gravity.CENTER
         }
+
         val specWidth = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         val specHeight = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
         linearLayout.measure(specWidth, specHeight)
@@ -89,30 +102,28 @@ class FCPBannerView {
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         val imageData = stream.toByteArray()
         bitmap.recycle()
-        val mapImage =
-            MapImage(
-                imageData,
-                ImageFormat.PNG
-            )
+
+        val mapImage = MapImage(imageData, ImageFormat.PNG)
+        val point2D = Point2D(0.0, visibleArea!!.top.toDouble())
+        val anchor2D = Anchor2D(0.0, 0.0)
+
         if (mapImageOverlay == null) {
-            mapImageOverlay = MapImageOverlay(
-                Point2D(visibleArea!!.left.toDouble(), visibleArea!!.top.toDouble()),
-                mapImage, Anchor2D(0.0, 0.0)
-            )
+            mapImageOverlay = MapImageOverlay(point2D, mapImage, anchor2D)
         } else {
             mapImageOverlay?.image = mapImage
-            mapImageOverlay?.anchor = Anchor2D(0.0, 0.0)
-            mapImageOverlay?.viewCoordinates =
-                Point2D(visibleArea!!.left.toDouble(), visibleArea!!.top.toDouble())
+            mapImageOverlay?.anchor = anchor2D
+            mapImageOverlay?.viewCoordinates = point2D
         }
-        viewHeight = linearLayout.height.toDouble()
+        height = linearLayout.height.toDouble()
     }
 
+    /** Set the text for the banner. */
     fun setMessage(text: String) {
         textView = text
         getView()
     }
 
+    /** Set the background color for the banner. */
     fun setBackgroundColor(color: Long) {
         backgroundColor = color.toInt()
         getView()

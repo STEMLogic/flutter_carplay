@@ -1,13 +1,17 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
+import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.car.app.CarContext
@@ -21,8 +25,9 @@ import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import java.io.ByteArrayOutputStream
 
-/** A custom overlay view for the map view controller. */
-class FCPOverlayView {
+
+/** A custom trip preview for the map view controller. */
+class FCPTripPreview {
     private val carContext: CarContext
         get() = AndroidAutoService.session?.carContext!!
     private val fcpMapViewController: FCPMapViewController?
@@ -35,7 +40,6 @@ class FCPOverlayView {
     private var mapImageOverlay: MapImageOverlay? = null
     private var primaryTitle: String? = null
     private var secondaryTitle: String? = null
-    private var subtitle: String? = null
 
     var width: Double = 0.0
     var isHidden: Boolean = true
@@ -64,6 +68,7 @@ class FCPOverlayView {
     fun getView() {
         mapView ?: return
         visibleArea ?: return
+        val frameLayout = FrameLayout(carContext)
         val linearLayout = LinearLayout(carContext)
         val shape = GradientDrawable()
         shape.setCornerRadius(10f)
@@ -71,58 +76,38 @@ class FCPOverlayView {
             clipToPadding = false
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
+
             setPadding(4, 4, 4, 4)
+            val typedValue = TypedValue()
+            val theme: Resources.Theme = carContext.theme
+            theme.resolveAttribute(android.R.attr.colorBackground, typedValue, true)
+            val textColor = typedValue.data
+
             addView(TextView(carContext).apply {
                 layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+                maxWidth = ((mapView?.viewportSize?.width ?: 0.0) * 0.3).toInt()
                 text = primaryTitle
                 textSize = 20F
-                maxLines = 1
-                setTextColor(Color.WHITE)
+                setTypeface(null, Typeface.BOLD)
+                setTextColor(textColor)
                 setPadding(10, 10, 10, 0)
-                background = getDrawableWithRadius(
-                    Color.parseColor("#004000"),
-                    floatArrayOf(10f, 10f, 10f, 10f, 0f, 0f, 0f, 0f)
-                )
             })
             addView(TextView(carContext).apply {
                 layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                maxWidth = ((mapView?.viewportSize?.width ?: 0.0) * 0.65).toInt()
+                maxWidth = ((mapView?.viewportSize?.width ?: 0.0) * 0.3).toInt()
                 text = secondaryTitle
                 textSize = 20F
-                setTextColor(Color.WHITE)
-                background = getDrawableWithRadius(
-                    Color.parseColor("#004000"),
-                    floatArrayOf(0f, 0f, 0f, 0f, 0f, 0f, 0f, 0f)
-                )
-                setPadding(10, 0, 10, 15)
-            })
-            addView(View(carContext).apply {
-                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1)
-                setBackgroundColor(Color.TRANSPARENT)
-            })
-            addView(TextView(carContext).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-                )
-                text = subtitle
-                maxWidth = ((mapView?.viewportSize?.width ?: 0.0) * 0.65).toInt()
-                textSize = 20F
-                setTextColor(Color.WHITE)
-                background = getDrawableWithRadius(
-                    Color.parseColor("#004000"),
-                    floatArrayOf(0f, 0f, 0f, 0f, 10f, 10f, 10f, 10f)
-                )
-                setPadding(10, 15, 10, 15)
+                setTextColor(textColor)
+                setPadding(10, 0, 10, 10)
             })
         }
 
@@ -131,13 +116,47 @@ class FCPOverlayView {
         linearLayout.measure(specWidth, specHeight)
         linearLayout.layout(0, 0, linearLayout.measuredWidth, linearLayout.measuredHeight)
 
+        frameLayout.apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+
+            addView(View(carContext).apply {
+                layoutParams = ViewGroup.LayoutParams(
+                    ((mapView?.viewportSize?.width ?: 0.0) * 0.3).toInt(),
+                    (mapView?.viewportSize?.height
+                        ?: visibleArea!!.height()).toInt() - visibleArea!!.top - (fcpMapViewController?.bannerViewHeight?.toInt()
+                        ?: 0) - 24
+                )
+
+                val typedValue = TypedValue()
+                val theme: Resources.Theme = carContext.theme
+                theme.resolveAttribute(
+                    android.R.attr.panelColorBackground,
+                    typedValue,
+                    true
+                )
+                background =
+                    getDrawableWithRadius(
+                        typedValue.data,
+                        floatArrayOf(10f, 10f, 10f, 10f, 10f, 10f, 10f, 10f)
+                    )
+            })
+
+            addView(linearLayout)
+        }
+
+        frameLayout.measure(specWidth, specHeight)
+        frameLayout.layout(0, 0, frameLayout.measuredWidth, frameLayout.measuredHeight)
+
         val bitmap = Bitmap.createBitmap(
-            linearLayout.measuredWidth,
-            linearLayout.measuredHeight,
+            frameLayout.measuredWidth,
+            frameLayout.measuredHeight,
             Bitmap.Config.ARGB_8888
         )
         val canvas = Canvas(bitmap)
-        linearLayout.draw(canvas)
+        frameLayout.draw(canvas)
         val stream = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         val imageData = stream.toByteArray()
@@ -170,12 +189,6 @@ class FCPOverlayView {
     /** Set the secondary title of the overlay. */
     fun setSecondaryTitle(text: String) {
         secondaryTitle = text
-        getView()
-    }
-
-    /** Set the subtitle of the overlay. */
-    fun setSubtitle(text: String) {
-        subtitle = text
         getView()
     }
 }

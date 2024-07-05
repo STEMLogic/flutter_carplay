@@ -1,7 +1,6 @@
 package com.oguzhnatly.flutter_carplay.models.list
 
 import androidx.car.app.model.Action
-import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.ParkedOnlyOnClickListener
 import androidx.car.app.model.Row
@@ -121,8 +120,14 @@ class FCPListItem(obj: Map<String, Any>) {
         when (accessoryType) {
             CPListItemAccessoryType.disclosureIndicator -> {
                 builder.addAction(
-                    Action.Builder().setIcon(CarIcon.Builder(IconCompat.createWithResource(AndroidAutoService.session?.carContext,
-                        R.drawable.next)).build()).setOnClickListener(onClick).build()
+                    Action.Builder().setIcon(
+                        CarIcon.Builder(
+                            IconCompat.createWithResource(
+                                AndroidAutoService.session?.carContext,
+                                R.drawable.next
+                            )
+                        ).build()
+                    ).setOnClickListener(onClick).build()
                 )
             }
 

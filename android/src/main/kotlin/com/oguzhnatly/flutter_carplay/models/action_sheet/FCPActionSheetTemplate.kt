@@ -5,7 +5,6 @@ import androidx.car.app.model.CarIcon
 import androidx.car.app.model.LongMessageTemplate
 import androidx.car.app.model.MessageTemplate
 import com.oguzhnatly.flutter_carplay.Bool
-import com.oguzhnatly.flutter_carplay.CPActionSheetTemplate
 import com.oguzhnatly.flutter_carplay.CPAlertAction
 import com.oguzhnatly.flutter_carplay.CPAlertActionStyle
 import com.oguzhnatly.flutter_carplay.CPTemplate
@@ -59,7 +58,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun longMessageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            LongMessageTemplate.Builder(message?:" ").setTitle(title?:" ")
+            LongMessageTemplate.Builder(message ?: " ").setTitle(title ?: " ")
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
@@ -79,7 +78,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun messageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            MessageTemplate.Builder(message?:" ").setTitle(title?:" ").setIcon(CarIcon.ALERT)
+            MessageTemplate.Builder(message ?: " ").setTitle(title ?: " ").setIcon(CarIcon.ALERT)
         objcActions.forEach {
             when (it.style) {
                 CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {

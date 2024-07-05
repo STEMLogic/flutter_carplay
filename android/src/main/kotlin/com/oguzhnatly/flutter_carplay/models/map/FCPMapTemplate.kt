@@ -110,7 +110,7 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
      *
      * @return void
      */
-    private fun initialize() {
+    private fun initializeCarContext() {
         AndroidAutoService.session?.carContext?.let {
             it.getCarService(AppManager::class.java).setSurfaceCallback(viewController)
 
@@ -126,18 +126,25 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
              */
             override fun onStopNavigation() {
                 stopNavigation()
-                FCPStreamHandlerPlugin.sendEvent(
-                    type = FCPChannelTypes.onNavigationCompletedFromCarplay.name,
-                    data = mapOf()
-                )
+                if (fcpMapViewController?.mapView != null) {
+                    FCPStreamHandlerPlugin.sendEvent(
+                        type = FCPChannelTypes.onNavigationCompletedFromCarplay.name,
+                        data = mapOf()
+                    )
+                }
             }
         })
+    }
+
+    /** Resets the car context. */
+    fun resetCarContext() {
+        isCarContextInitialized = false
     }
 
     /** Gets the Android Auto map template object based on the configured parameters. */
     override fun getTemplate(): CPMapTemplate {
         if (AndroidAutoService.session?.carContext != null && !isCarContextInitialized) {
-            initialize()
+            initializeCarContext()
             isCarContextInitialized = true
         }
 
@@ -187,7 +194,6 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
      * @param routingInfo The new routing information.
      * @param removeRoutingInfo A boolean value indicating whether the routing information should
      * be removed.
-     *
      */
     fun update(
         title: String? = null,
@@ -235,12 +241,20 @@ fun FCPMapTemplate.showTripPreviews(
 ) {
     val cpTrips = trips.map { it.getTemplate() }
 //    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
+    selectedTrip?.let {
+        fcpMapViewController?.showTripPreview(
+            primaryTitle = it.destination.name,
+            secondaryTitle = it.routeChoices.first().additionalInformationVariants.firstOrNull()
+                ?: "--"
+        )
+    }
     //    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
     //    textConfiguration: textConfiguration?.get)
 }
 
 /** Hide trip previews. */
 fun FCPMapTemplate.hideTripPreviews() {
+    fcpMapViewController?.hideTripPreview()
 }
 
 /**

@@ -46,7 +46,10 @@ import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
  * (Make sure to set language + region in device settings.)
  */
 class NavigationHelper(private val mapView: MapSurface) {
+    /// The VisualNavigator instance.
     private var visualNavigator: VisualNavigator
+
+    /// The DynamicRoutingEngine instance.
     private lateinit var dynamicRoutingEngine: DynamicRoutingEngine
 
     // A class to receive real location events.
@@ -60,13 +63,16 @@ class NavigationHelper(private val mapView: MapSurface) {
     private val routePrefetcher: RoutePrefetcher =
         RoutePrefetcher(SDKNativeEngine.getSharedInstance()!!)
 
+    /// Instance of the NavigationEventHandler.
     val navigationEventHandler: NavigationEventHandler
 
-    var visualNavigatorCameraPoint: Anchor2D? = null
-        private set
+    /// The normalized principal point of the VisualNavigator camera.
+    private var visualNavigatorCameraPoint: Anchor2D? = null
 
+    /// Whether navigation is in progress.
     var isNavigationInProgress = false
 
+    /// The last known location.
     val lastKnownLocation: Location?
         get() = herePositioningProvider.lastKnownLocation
 
