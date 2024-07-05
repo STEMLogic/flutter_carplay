@@ -41,6 +41,12 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
         elementId = elementIdValue!!
         title = obj["title"] as? String
         message = obj["message"] as? String
+        if (title.isNullOrEmpty())
+            title = " "
+        if (message.isNullOrEmpty()) {
+            message = title
+            title = " "
+        }
         objcActions = (obj["actions"] as? List<Map<String, Any>>)?.map {
             FCPAlertAction(it)
         } ?: emptyList()
