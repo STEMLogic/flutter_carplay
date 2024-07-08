@@ -174,7 +174,6 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
             }
             mapTemplate.setActionStrip(actionStrip.build())
         }
-
         _super = mapTemplate.build()
         return _super
     }
@@ -237,10 +236,7 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
 fun FCPMapTemplate.showTripPreviews(
     trips: List<FCPTrip>,
     selectedTrip: FCPTrip?,
-    //    textConfiguration: FCPTripPreviewTextConfiguration?,
 ) {
-    val cpTrips = trips.map { it.getTemplate() }
-//    currentTrip = selectedTrip?.getTemplate() ?: cpTrips.first()
     selectedTrip?.let {
         fcpMapViewController?.showTripPreview(
             primaryTitle = it.destination.name,
@@ -248,8 +244,6 @@ fun FCPMapTemplate.showTripPreviews(
                 ?: "--"
         )
     }
-    //    _super?.showTripPreviews(cpTrips, selectedTrip: selectedTrip?. get,
-    //    textConfiguration: textConfiguration?.get)
 }
 
 /** Hide trip previews. */
@@ -284,7 +278,7 @@ fun FCPMapTemplate.stopNavigation() {
 fun FCPMapTemplate.showPanningInterface() {
     isPanningInterfaceVisible = true
 
-//    fcpMapViewController?.hideSubviews()
+    fcpMapViewController?.hideSubviews()
     fcpMapViewController?.mapController?.navigationHelper?.stopCameraTracking()
 }
 
@@ -292,6 +286,6 @@ fun FCPMapTemplate.showPanningInterface() {
 fun FCPMapTemplate.dismissPanningInterface() {
     isPanningInterfaceVisible = false
 
-//    fcpMapViewController?.showSubviews()
+    fcpMapViewController?.showSubviews()
     fcpMapViewController?.mapController?.navigationHelper?.startCameraTracking()
 }

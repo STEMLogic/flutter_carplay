@@ -18,8 +18,6 @@
  */
 package com.oguzhnatly.flutter_carplay.models.map.here_map
 
-import android.annotation.SuppressLint
-import android.graphics.Bitmap
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.DateTimeWithZone
 import androidx.car.app.navigation.model.RoutingInfo
@@ -54,9 +52,7 @@ import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.Logger
 import com.oguzhnatly.flutter_carplay.MapMarkerType
-import com.oguzhnatly.flutter_carplay.UIImage
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
-import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.TimeZone
 
@@ -175,11 +171,9 @@ class MapController(private val mapView: MapSurface) {
      * @param markerSize The size of the marker
      * @param metadata The metadata of the marker
      */
-//    @SuppressLint("RestrictedApi")
-    @SuppressLint("RestrictedApi")
     fun addMapMarker(
         coordinates: GeoCoordinates,
-        markerImage: UIImage,
+        markerImage: ByteArray,
         markerSize: CGSize,
         metadata: Metadata?,
     ) {
@@ -192,13 +186,8 @@ class MapController(private val mapView: MapSurface) {
             mapView.mapScene.removeMapMarker(marker)
             mapView.mapScene.addMapMarker(marker)
         } else {
-            val bitmap = markerImage.icon?.bitmap ?: return
-            val stream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            val imageData = stream.toByteArray()
-            bitmap.recycle()
             val mapImage = MapImage(
-                imageData,
+                markerImage,
                 ImageFormat.PNG,
                 markerSize.width.toLong(),
                 markerSize.height.toLong(),

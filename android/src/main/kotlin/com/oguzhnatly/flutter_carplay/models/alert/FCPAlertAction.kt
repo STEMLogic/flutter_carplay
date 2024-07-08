@@ -3,6 +3,7 @@ package com.oguzhnatly.flutter_carplay.models.alert
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.ParkedOnlyOnClickListener
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPAlertAction
 import com.oguzhnatly.flutter_carplay.CPAlertActionStyle
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
@@ -49,7 +50,7 @@ class FCPAlertAction(obj: Map<String, Any>) {
     }
 
     /** Returns the underlying CPAlertAction instance configured with the specified properties. */
-    fun getTemplate(): CPAlertAction {
+    fun getTemplate(useInActions: Bool = false): CPAlertAction {
         val onClick = {
             FCPStreamHandlerPlugin.sendEvent(
                 type = FCPChannelTypes.onFCPAlertActionPressed.name,
@@ -61,7 +62,7 @@ class FCPAlertAction(obj: Map<String, Any>) {
         when (style) {
             CPAlertActionStyle.cancel -> alertAction.setBackgroundColor(CarColor.BLUE)
             CPAlertActionStyle.destructive -> alertAction.setBackgroundColor(CarColor.RED)
-            else -> {}
+            else -> if (useInActions) alertAction.setBackgroundColor(CarColor.BLUE)
         }
 
         _super = alertAction.build()

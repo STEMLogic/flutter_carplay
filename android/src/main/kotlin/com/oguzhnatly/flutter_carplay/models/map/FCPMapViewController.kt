@@ -29,7 +29,6 @@ import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayTemplateManager
 import com.oguzhnatly.flutter_carplay.Logger
 import com.oguzhnatly.flutter_carplay.MapMarkerType
-import com.oguzhnatly.flutter_carplay.UIImageObject
 import com.oguzhnatly.flutter_carplay.models.map.here_map.CGSize
 import com.oguzhnatly.flutter_carplay.models.map.here_map.ConstantsEnum
 import com.oguzhnatly.flutter_carplay.models.map.here_map.MapController
@@ -38,6 +37,7 @@ import com.oguzhnatly.flutter_carplay.models.map.here_map.locationUpdatedHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.recenterMapViewHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.toggleSatelliteViewHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.updateMapCoordinatesHandler
+import com.oguzhnatly.flutter_carplay.pathToByteArray
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlin.math.max
@@ -454,7 +454,7 @@ class FCPMapViewController : SurfaceCallback {
 
             val topSafeArea = visibleArea.top
             val leftSafeArea = visibleArea.left
-            val rightSafeArea = 0.0// visibleArea.right
+            val rightSafeArea = 0.0 // visibleArea.right
             val width = mapView?.viewportSize?.width ?: visibleArea.width().toDouble()
             val height = mapView?.viewportSize?.height ?: visibleArea.height().toDouble()
             val bannerHeight = if (bannerView.isHidden) 0.0 else bannerView.height
@@ -474,7 +474,7 @@ class FCPMapViewController : SurfaceCallback {
                     Size2D(
                         width -
                                 leftSafeArea -
-                                rightSafeArea -
+                                rightSafeArea - tripPreviewWidth -
                                 markerPinSize * 2,
                         height - topSafeArea - bannerHeight - markerPinSize * 2
                     )
@@ -720,7 +720,7 @@ fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accura
     metadata.setString("marker", MapMarkerType.INITIAL.name)
     metadata.setString("polygon", MapMarkerType.INITIAL.name)
 
-    val image = UIImageObject.fromFlutterAsset("assets/icons/carplay/position.png")
+    val image = "assets/icons/carplay/position.png".pathToByteArray()
     val markerSize = 30 * (mapView?.pixelScale ?: 1.0)
 
     mapController?.addMapMarker(
@@ -745,7 +745,7 @@ fun FCPMapViewController.renderIncidentAddressMarker(coordinates: GeoCoordinates
     val metadata = Metadata()
     metadata.setString("marker", MapMarkerType.INCIDENT_ADDRESS.name)
 
-    val image = UIImageObject.fromFlutterAsset("assets/icons/carplay/map_marker_big.png")
+    val image = "assets/icons/carplay/map_marker_big.png".pathToByteArray()
 
     mapController?.addMapMarker(
         coordinates = coordinates,
@@ -765,7 +765,7 @@ fun FCPMapViewController.renderDestinationAddressMarker(coordinates: GeoCoordina
     val metadata = Metadata()
     metadata.setString("marker", MapMarkerType.DESTINATION_ADDRESS.name)
 
-    val image = UIImageObject.fromFlutterAsset("assets/icons/carplay/map_marker_wp.png")
+    val image = "assets/icons/carplay/map_marker_wp.png".pathToByteArray()
 
     mapController?.addMapMarker(
         coordinates = coordinates,
@@ -869,13 +869,13 @@ fun FCPMapViewController.stopNavigation() {
 /** Zooms in the camera. */
 fun FCPMapViewController.zoomInMapView() {
     if (mapView == null) return
-    val zoomLevel = min(mapView!!.camera.state.zoomLevel.toDouble() + 1, 22.0)
+    val zoomLevel = min(mapView!!.camera.state.zoomLevel + 1, 22.0)
     mapView!!.camera.zoomTo(zoomLevel)
 }
 
 /** Zooms out the camera. */
 fun FCPMapViewController.zoomOutMapView() {
     if (mapView == null) return
-    val zoomLevel = max(mapView!!.camera.state.zoomLevel.toDouble() - 1, 0.0)
+    val zoomLevel = max(mapView!!.camera.state.zoomLevel - 1, 0.0)
     mapView!!.camera.zoomTo(zoomLevel)
 }

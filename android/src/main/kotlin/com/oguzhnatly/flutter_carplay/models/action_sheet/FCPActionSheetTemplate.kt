@@ -65,19 +65,27 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     private fun longMessageTemplate(): CPTemplate {
         val actionSheetTemplate =
             LongMessageTemplate.Builder(message ?: " ").setTitle(title ?: " ")
+
         objcActions.forEach {
-            when (it.style) {
-                CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
+            when {
+                it.style == CPAlertActionStyle.normal && objcActions.count() <= 2 -> {
+                    actionSheetTemplate.addAction(it.getTemplate(useInActions = true))
+                }
+
+                it.style == CPAlertActionStyle.destructive || it.style == CPAlertActionStyle.cancel -> {
                     actionSheetTemplate.addAction(it.getTemplate())
                 }
 
-                else -> {
+                it.style == CPAlertActionStyle.normal -> {
                     val actionStripBuilder = ActionStrip.Builder()
                     actionStripBuilder.addAction(it.getTemplate())
                     actionSheetTemplate.setActionStrip(actionStripBuilder.build())
                 }
+
+                else -> {}
             }
         }
+
         _super = actionSheetTemplate.build()
         return _super
     }
@@ -85,19 +93,27 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     private fun messageTemplate(): CPTemplate {
         val actionSheetTemplate =
             MessageTemplate.Builder(message ?: " ").setTitle(title ?: " ").setIcon(CarIcon.ALERT)
+
         objcActions.forEach {
-            when (it.style) {
-                CPAlertActionStyle.destructive, CPAlertActionStyle.cancel -> {
+            when {
+                it.style == CPAlertActionStyle.normal && objcActions.count() <= 2 -> {
+                    actionSheetTemplate.addAction(it.getTemplate(useInActions = true))
+                }
+
+                it.style == CPAlertActionStyle.destructive || it.style == CPAlertActionStyle.cancel -> {
                     actionSheetTemplate.addAction(it.getTemplate())
                 }
 
-                else -> {
+                it.style == CPAlertActionStyle.normal -> {
                     val actionStripBuilder = ActionStrip.Builder()
                     actionStripBuilder.addAction(it.getTemplate())
                     actionSheetTemplate.setActionStrip(actionStripBuilder.build())
                 }
+
+                else -> {}
             }
         }
+
         _super = actionSheetTemplate.build()
         return _super
     }

@@ -479,20 +479,15 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 }
 
                 val selectedTrip = args["selectedTrip"] as? Map<String, Any>
-//                val textConfiguration = args["textConfiguration"] as? Map<String, Any>
 
                 // Find the map template based on the provided element ID
                 val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
-
                     val fcpTrips = trips.map { FCPTrip(it) }
                     val fcpSelectedTrip = selectedTrip?.let { FCPTrip(it) }
-//                    val fcpTextConfiguration = textConfiguration?.let {
-//                        FCPTripPreviewTextConfiguration(it)
-//                    }
+
                     mapTemplate.showTripPreviews(
                         trips = fcpTrips,
                         selectedTrip = fcpSelectedTrip,
-//                        textConfiguration = fcpTextConfiguration
                     )
                 }
 
