@@ -21,6 +21,9 @@ class CPTextButton {
   /// The title displayed on the bar button.
   final String title;
 
+  /// Whether the button is primary or not
+  final bool isPrimary;
+
   /// The style to use when displaying the button.
   /// Default is [CPTextButtonStyles.normal]
   final CPTextButtonStyles style;
@@ -32,12 +35,14 @@ class CPTextButton {
   CPTextButton({
     required this.title,
     required this.onPressed,
+    this.isPrimary = false,
     this.style = CPTextButtonStyles.normal,
   });
 
   Map<String, dynamic> toJson() => {
         '_elementId': _elementId,
         'title': title,
+        'isPrimary': isPrimary,
         'style': style.name,
       };
 

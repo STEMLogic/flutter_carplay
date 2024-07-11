@@ -104,16 +104,15 @@ class FCPInformationTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
         informationItems.forEach {
             paneBuilder.addRow(it)
         }
-        actions.forEach {
-            paneBuilder.addAction(it)
-        }
+        objcActions.forEach { if (!it.isPrimary) paneBuilder.addAction(it.getTemplate()) }
         val informationTemplate = PaneTemplate.Builder(paneBuilder.build())
         informationTemplate.setTitle(title!!)
 
         //backButton?.let { informationTemplate.setHeaderAction(it) }
         informationTemplate.setHeaderAction(Action.Builder(Action.BACK).setEnabled(false).build())
 
-        if (leadingNavigationBarButtons.isNotEmpty() || trailingNavigationBarButtons.isNotEmpty()) {
+        val primaryButton = objcActions.find { it.isPrimary }
+        if (leadingNavigationBarButtons.isNotEmpty() || trailingNavigationBarButtons.isNotEmpty() || primaryButton != null) {
             val actionStrip = ActionStrip.Builder()
             for (button in leadingNavigationBarButtons) {
                 actionStrip.addAction(button.getTemplate())
@@ -121,6 +120,7 @@ class FCPInformationTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
             for (button in trailingNavigationBarButtons) {
                 actionStrip.addAction(button.getTemplate())
             }
+            primaryButton?.let { actionStrip.addAction(it.getTemplate()) }
             informationTemplate.setActionStrip(actionStrip.build())
         }
 

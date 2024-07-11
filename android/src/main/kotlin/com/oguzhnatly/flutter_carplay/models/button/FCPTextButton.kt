@@ -3,6 +3,7 @@ package com.oguzhnatly.flutter_carplay.models.button
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.ParkedOnlyOnClickListener
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPTextButton
 import com.oguzhnatly.flutter_carplay.CPTextButtonStyle
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
@@ -25,6 +26,11 @@ class FCPTextButton(obj: Map<String, Any>) {
     /// The title associated with the text button.
     private var title: String
 
+    /// Whether the text button is primary or not.
+    ///
+    /// Available only on Android Auto.
+    var isPrimary: Bool
+
     /// The style of the text button.
     private var style: CPTextButtonStyle
 
@@ -37,6 +43,7 @@ class FCPTextButton(obj: Map<String, Any>) {
 
         elementId = elementIdValue!!
         title = titleValue!!
+        isPrimary = obj["isPrimary"] as? Bool ?: false
 
         val styleString = obj["style"] as? String ?: "normal"
 
