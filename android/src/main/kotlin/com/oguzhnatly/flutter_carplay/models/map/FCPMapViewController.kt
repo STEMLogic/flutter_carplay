@@ -95,13 +95,19 @@ class FCPMapViewController : SurfaceCallback {
     private var isSatelliteViewEnabled = false
 
     /// Whether the dashboard scene is active.
-    val isDashboardSceneActive
+    var isDashboardSceneActive
         get() = FlutterCarplayTemplateManager.isDashboardSceneActive
+        set(value) {
+            FlutterCarplayTemplateManager.isDashboardSceneActive = value
+        }
 
     /// Whether the dashboard scene is active.
-    val isPanningInterfaceVisible
-        get() = (FlutterCarplayPlugin.fcpRootTemplate as?
-                FCPMapTemplate)?.isPanningInterfaceVisible ?: false
+    var isPanningInterfaceVisible
+        get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.isPanningInterfaceVisible
+            ?: false
+        set(value) {
+            (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.togglePanningInterface(value)
+        }
 
     /// Should stop voice assistant.
     var shouldStopVoiceAssistant = true
@@ -132,6 +138,8 @@ class FCPMapViewController : SurfaceCallback {
 
     /// A debounce object for optimizing surface events.
     private var surfaceDebounce = Debounce(CoroutineScope(Dispatchers.Main))
+
+    /// A debounce object for optimizing camera updates.
     private var cameraUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
 
     /// Default coordinates for the map.
@@ -171,11 +179,11 @@ class FCPMapViewController : SurfaceCallback {
                 if (count > 5) break
 
                 Handler(Looper.getMainLooper()).postDelayed(
-                    { count++ },
-                    1000L
+                    { count++ }, 1000L
                 )
             }
 
+            // Set the map surface to the map view only if the map surface is valid
             if (mapSurface?.isValid == true) mapView = mapSurface
 
             toggleSatelliteViewHandler = { isSatelliteViewEnabled: Bool ->
@@ -185,11 +193,9 @@ class FCPMapViewController : SurfaceCallback {
 
                 AndroidAutoService.session?.carContext?.let {
                     mapScheme = if (it.isDarkMode) {
-                        if (isSatelliteViewEnabled) MapScheme.HYBRID_NIGHT else
-                            MapScheme.NORMAL_NIGHT
+                        if (isSatelliteViewEnabled) MapScheme.HYBRID_NIGHT else MapScheme.NORMAL_NIGHT
                     } else {
-                        if (isSatelliteViewEnabled) MapScheme.HYBRID_DAY else
-                            MapScheme.NORMAL_DAY
+                        if (isSatelliteViewEnabled) MapScheme.HYBRID_DAY else MapScheme.NORMAL_DAY
                     }
                 }
 
@@ -227,6 +233,8 @@ class FCPMapViewController : SurfaceCallback {
      * @param stableArea the new stable area of the view controller
      */
     override fun onStableAreaChanged(stableArea: Rect) {
+        if (stableArea.isEmpty) return
+
         this.stableArea = stableArea
         Logger.log("Stable Area Updated: $stableArea")
 
@@ -241,8 +249,10 @@ class FCPMapViewController : SurfaceCallback {
      * @param visibleArea the new visible area of the map view controller
      */
     override fun onVisibleAreaChanged(visibleArea: Rect) {
+        if (visibleArea.isEmpty) return
+
         this.visibleArea = visibleArea
-        Logger.log("Visible Area Updated: $stableArea")
+        Logger.log("Visible Area Updated: $visibleArea")
 
         bannerView.getView()
         overlayView.getView()
@@ -258,7 +268,7 @@ class FCPMapViewController : SurfaceCallback {
      * [SurfaceCallback.onScroll] definition for more details.
      */
     override fun onScroll(distanceX: Float, distanceY: Float) {
-        if (!isPanningInterfaceVisible) return
+        isPanningInterfaceVisible = true
         mapView?.gestures?.scrollHandler?.onScroll(distanceX, distanceY)
     }
 
@@ -267,7 +277,7 @@ class FCPMapViewController : SurfaceCallback {
      * definition for more details.
      */
     override fun onScale(focusX: Float, focusY: Float, scaleFactor: Float) {
-        if (!isPanningInterfaceVisible) return
+        isPanningInterfaceVisible = true
         mapView?.gestures?.scaleHandler?.onScale(focusX, focusY, scaleFactor)
     }
 
@@ -276,7 +286,7 @@ class FCPMapViewController : SurfaceCallback {
      * definition for more details.
      */
     override fun onFling(velocityX: Float, velocityY: Float) {
-        if (!isPanningInterfaceVisible) return
+        isPanningInterfaceVisible = true
 
         /**
          * Fling event appears to have inverted axis compared to scroll event on desktop head unit.
@@ -331,8 +341,7 @@ class FCPMapViewController : SurfaceCallback {
 
                     mapCoordinates.stationAddressCoordinates != null -> {
                         renderInitialMarker(
-                            coordinates = mapCoordinates.stationAddressCoordinates!!,
-                            accuracy = 0.0
+                            coordinates = mapCoordinates.stationAddressCoordinates!!, accuracy = 0.0
                         )
                     }
 
@@ -347,75 +356,66 @@ class FCPMapViewController : SurfaceCallback {
 
                 mapCoordinates.destinationAddressCoordinates?.let {
                     renderDestinationAddressMarker(it)
-                }
-                    ?: mapController?.removeMarker(MapMarkerType.DESTINATION_ADDRESS)
+                } ?: mapController?.removeMarker(MapMarkerType.DESTINATION_ADDRESS)
             }
 
         // Recenter map position
-        recenterMapViewHandler =
-            recenterMapViewHandler@{ recenterMapPosition: String ->
-                if (mapView == null) return@recenterMapViewHandler
+        recenterMapViewHandler = recenterMapViewHandler@{ recenterMapPosition: String ->
+            if (mapView == null) return@recenterMapViewHandler
 
-                this.recenterMapPosition = recenterMapPosition
+            this.recenterMapPosition = recenterMapPosition
 
-                if (isPanningInterfaceVisible) return@recenterMapViewHandler
+            if (isPanningInterfaceVisible) return@recenterMapViewHandler
 
-                if (mapController?.navigationHelper?.isNavigationInProgress == true) {
-                    mapController?.navigationHelper?.startCameraTracking()
-                } else {
-                    val initialMarkerCoordinates =
-                        mapController?.getMarkerCoordinates(MapMarkerType.INITIAL)
-                    val incidentAddressCoordinates =
-                        mapController?.getMarkerCoordinates(MapMarkerType.INCIDENT_ADDRESS)
-                    val destinationAddressCoordinates =
-                        mapController?.getMarkerCoordinates(
-                            MapMarkerType.DESTINATION_ADDRESS
-                        )
+            if (mapController?.navigationHelper?.isNavigationInProgress == true) {
+                mapController?.navigationHelper?.startCameraTracking()
+            } else {
+                val initialMarkerCoordinates =
+                    mapController?.getMarkerCoordinates(MapMarkerType.INITIAL)
+                val incidentAddressCoordinates =
+                    mapController?.getMarkerCoordinates(MapMarkerType.INCIDENT_ADDRESS)
+                val destinationAddressCoordinates = mapController?.getMarkerCoordinates(
+                    MapMarkerType.DESTINATION_ADDRESS
+                )
 
-                    when (recenterMapPosition) {
-                        "initialMarker" -> {
-                            if (initialMarkerCoordinates != null) {
-                                flyToCoordinates(initialMarkerCoordinates)
-                            }
+                when (recenterMapPosition) {
+                    "initialMarker" -> {
+                        if (initialMarkerCoordinates != null) {
+                            flyToCoordinates(initialMarkerCoordinates)
                         }
-
-                        "addressMarker" -> {
-                            if (incidentAddressCoordinates != null &&
-                                destinationAddressCoordinates != null
-                            ) {
-                                lookAtArea(
-                                    geoCoordinates =
-                                    listOf(
-                                        incidentAddressCoordinates,
-                                        destinationAddressCoordinates,
-                                    )
-                                )
-                            } else if (incidentAddressCoordinates != null) {
-                                flyToCoordinates(incidentAddressCoordinates)
-                            }
-                        }
-
-                        "bothMarkers" -> {
-                            if (initialMarkerCoordinates != null &&
-                                incidentAddressCoordinates != null
-                            ) {
-                                val geoCoordinates =
-                                    mutableListOf(
-                                        initialMarkerCoordinates,
-                                        incidentAddressCoordinates,
-                                    )
-                                if (destinationAddressCoordinates != null) {
-                                    geoCoordinates.add(destinationAddressCoordinates)
-                                }
-
-                                lookAtArea(geoCoordinates)
-                            }
-                        }
-
-                        else -> {}
                     }
+
+                    "addressMarker" -> {
+                        if (incidentAddressCoordinates != null && destinationAddressCoordinates != null) {
+                            lookAtArea(
+                                geoCoordinates = listOf(
+                                    incidentAddressCoordinates,
+                                    destinationAddressCoordinates,
+                                )
+                            )
+                        } else if (incidentAddressCoordinates != null) {
+                            flyToCoordinates(incidentAddressCoordinates)
+                        }
+                    }
+
+                    "bothMarkers" -> {
+                        if (initialMarkerCoordinates != null && incidentAddressCoordinates != null) {
+                            val geoCoordinates = mutableListOf(
+                                initialMarkerCoordinates,
+                                incidentAddressCoordinates,
+                            )
+                            if (destinationAddressCoordinates != null) {
+                                geoCoordinates.add(destinationAddressCoordinates)
+                            }
+
+                            lookAtArea(geoCoordinates)
+                        }
+                    }
+
+                    else -> {}
                 }
             }
+        }
 
         // Update the initial location marker
         locationUpdatedHandler = {
@@ -454,31 +454,25 @@ class FCPMapViewController : SurfaceCallback {
 
             val topSafeArea = visibleArea.top
             val leftSafeArea = visibleArea.left
-            val rightSafeArea = 0.0 // visibleArea.right
             val width = mapView?.viewportSize?.width ?: visibleArea.width().toDouble()
             val height = mapView?.viewportSize?.height ?: visibleArea.height().toDouble()
+            val rightSafeArea = width - visibleArea.right
             val bannerHeight = if (bannerView.isHidden) 0.0 else bannerView.height
             val tripPreviewWidth = if (tripPreview.isHidden) 0.0 else tripPreview.width
 
-            val rectangle2D = if (isDashboardSceneActive)
-                Rectangle2D(
-                    Point2D(markerPinSize, markerPinSize),
-                    Size2D(width - markerPinSize * 2, height - markerPinSize * 2)
+            val rectangle2D = if (isDashboardSceneActive) Rectangle2D(
+                Point2D(markerPinSize, markerPinSize),
+                Size2D(width - markerPinSize * 2, height - markerPinSize * 2)
+            )
+            else Rectangle2D(
+                Point2D(
+                    leftSafeArea + tripPreviewWidth + markerPinSize,
+                    topSafeArea + bannerHeight + markerPinSize
+                ), Size2D(
+                    width - leftSafeArea - rightSafeArea - tripPreviewWidth - markerPinSize * 2,
+                    height - topSafeArea - bannerHeight - markerPinSize * 2
                 )
-            else
-                Rectangle2D(
-                    Point2D(
-                        leftSafeArea + tripPreviewWidth + markerPinSize,
-                        topSafeArea + bannerHeight + markerPinSize
-                    ),
-                    Size2D(
-                        width -
-                                leftSafeArea -
-                                rightSafeArea - tripPreviewWidth -
-                                markerPinSize * 2,
-                        height - topSafeArea - bannerHeight - markerPinSize * 2
-                    )
-                )
+            )
 
             mapView!!.camera.lookAt(
                 geoBox,
@@ -504,9 +498,9 @@ class FCPMapViewController : SurfaceCallback {
         val topSafeArea = visibleArea.top
         val bottomSafeArea = visibleArea.bottom
         val leftSafeArea = visibleArea.left
-        val rightSafeArea = if (isPanningInterfaceVisible) 0 else 0
         val width = mapView?.viewportSize?.width ?: visibleArea.width().toDouble()
         val height = mapView?.viewportSize?.height ?: visibleArea.height().toDouble()
+        val rightSafeArea = if (isPanningInterfaceVisible) 0 else width.toInt() - visibleArea.right
 
         if (isDashboardSceneActive) {
             val cameraPrincipalPoint = Point2D(width / 2.0, height / 2.0)
@@ -519,10 +513,8 @@ class FCPMapViewController : SurfaceCallback {
 
             mapView!!.setWatermarkLocation(
                 Anchor2D(
-                    leftSafeArea / width,
-                    bottomSafeArea / height
-                ),
-                Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
+                    leftSafeArea / width, bottomSafeArea / height
+                ), Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
             )
         } else {
             val bannerHeight = if (bannerView.isHidden) 0.0 else bannerView.height
@@ -530,11 +522,8 @@ class FCPMapViewController : SurfaceCallback {
             val tripPreviewWidth = if (tripPreview.isHidden) 0.0 else tripPreview.width
 
             val cameraPrincipalPoint = Point2D(
-                leftSafeArea +
-                        overlayViewWidth + tripPreviewWidth +
-                        (width - leftSafeArea - rightSafeArea - overlayViewWidth - tripPreviewWidth) / 2.0,
-                topSafeArea + bannerHeight + (height -
-                        topSafeArea - bannerHeight) / 2.0
+                leftSafeArea + overlayViewWidth + tripPreviewWidth + (width - leftSafeArea - rightSafeArea - overlayViewWidth - tripPreviewWidth) / 2.0,
+                topSafeArea + bannerHeight + (height - topSafeArea - bannerHeight) / 2.0
             )
             mapView!!.camera.principalPoint = cameraPrincipalPoint
 
@@ -554,8 +543,7 @@ class FCPMapViewController : SurfaceCallback {
                 Anchor2D(
                     (leftSafeArea + tripPreviewWidth) / width,
                     bottomSafeArea / height,
-                ),
-                Point2D(
+                ), Point2D(
                     mapView!!.watermarkSize.width / 2,
                     mapView!!.watermarkSize.height / 2,
                 )
@@ -730,9 +718,7 @@ fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accura
         metadata = metadata
     )
     mapController?.addMapPolygon(
-        coordinate = coordinates,
-        accuracy = accuracy,
-        metadata = metadata
+        coordinate = coordinates, accuracy = accuracy, metadata = metadata
     )
 }
 
@@ -800,14 +786,9 @@ fun FCPMapViewController.flyToCoordinates(
         mapView!!.camera.startAnimation(animation)
     } else {
         val animation = MapCameraAnimationFactory.flyTo(
-            GeoCoordinatesUpdate(coordinates),
-            GeoOrientationUpdate(0.0, 0.0),
-            MapMeasure(
-                MapMeasure.Kind.DISTANCE,
-                ConstantsEnum.DEFAULT_DISTANCE_IN_METERS
-            ),
-            bowFactor,
-            duration
+            GeoCoordinatesUpdate(coordinates), GeoOrientationUpdate(0.0, 0.0), MapMeasure(
+                MapMeasure.Kind.DISTANCE, ConstantsEnum.DEFAULT_DISTANCE_IN_METERS
+            ), bowFactor, duration
         )
 
         mapView!!.camera.startAnimation(animation)

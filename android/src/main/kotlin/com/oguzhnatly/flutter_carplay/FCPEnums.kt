@@ -145,6 +145,9 @@ enum class FCPChannelTypes {
     /// Event for dismissing the panning interface in Android Auto.
     dismissPanningInterface,
 
+    /// Event for toggling the panning interface in Android Auto.
+    onPanningInterfaceToggled,
+
     /// Event for starting a navigation in Android Auto.
     startNavigation,
 

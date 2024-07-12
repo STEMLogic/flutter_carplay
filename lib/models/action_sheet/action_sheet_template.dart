@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:uuid/uuid.dart';
 
 import '../alert/alert_action.dart';
@@ -16,6 +14,9 @@ class CPActionSheetTemplate extends CPPresentTemplate {
   /// The descriptive message providing details about the reason for displaying the action sheet.
   final String? message;
 
+  /// Whether the action sheet should be displayed as a long message.
+  ///
+  /// Available only on Android Auto.
   final bool? isLongMessage;
 
   /// The list of actions as [CPAlertAction] available on the action sheet.
@@ -26,9 +27,9 @@ class CPActionSheetTemplate extends CPPresentTemplate {
     required this.actions,
     super.isDismissible,
     super.routeName,
-    this.message,
     this.title,
-    this.isLongMessage
+    this.message,
+    this.isLongMessage,
   });
 
   Map<String, dynamic> toJson() => {

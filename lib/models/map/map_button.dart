@@ -12,6 +12,11 @@ class CPMapButton {
   /// The hidden state of the map button.
   final bool isHidden;
 
+  /// Weather the map button is for Action strip of the map.
+  ///
+  /// Available only on Android Auto.
+  final bool showInActionStrip;
+
   /// The image displayed on the map button.
   final String? image;
 
@@ -30,6 +35,7 @@ class CPMapButton {
   /// Creates [CPMapButton]
   CPMapButton({
     required this.onPressed,
+    this.showInActionStrip = false,
     this.isEnabled = true,
     this.isHidden = false,
     this.focusedImage,
@@ -39,6 +45,7 @@ class CPMapButton {
   });
 
   Map<String, dynamic> toJson() => {
+        'showInActionStrip': showInActionStrip,
         'focusedImage': focusedImage,
         '_elementId': _elementId,
         'isEnabled': isEnabled,

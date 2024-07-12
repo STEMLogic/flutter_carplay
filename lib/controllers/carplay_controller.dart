@@ -695,6 +695,18 @@ class FlutterCarplayController {
     }
   }
 
+  /// Processes the FCPPointOfInterestTemplateToggledChannel
+  ///
+  /// Parameters:
+  /// - elementId: The id of the [CPPointOfInterestTemplate]
+  void processPanningInterfaceToggled(String elementId) {
+    for (final template in templateHistory) {
+      if (template is CPMapTemplate && template.uniqueId == elementId) {
+        template.update(togglePanningInterface: true);
+      }
+    }
+  }
+
   /// Processes the FCPPointOfInterestTemplateCompletedChannel
   ///
   /// Parameters:

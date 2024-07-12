@@ -1,8 +1,8 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
+import android.content.res.Configuration.TOUCHSCREEN_NOTOUCH
 import androidx.car.app.AppManager
 import androidx.car.app.SurfaceCallback
-import androidx.car.app.model.Action
 import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarColor
 import androidx.car.app.navigation.NavigationManager
@@ -150,30 +150,55 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
 
         val mapTemplate = NavigationTemplate.Builder().setBackgroundColor(CarColor.GREEN)
 
-        routingInfo?.let { mapTemplate.setNavigationInfo(it) }
-        destinationTravelEstimates?.let {
-            mapTemplate.setDestinationTravelEstimate(it)
+        if (!isPanningInterfaceVisible) {
+            routingInfo?.let { mapTemplate.setNavigationInfo(it) }
+            destinationTravelEstimates?.let {
+                mapTemplate.setDestinationTravelEstimate(it)
+            }
         }
 
-        if (mapButtons.isNotEmpty()) {
+        val mapActionStripButtons = trailingNavigationBarButtons.filter { it.showInMapActionStrip }
+
+        if (mapButtons.isNotEmpty() || mapActionStripButtons.isNotEmpty()) {
             val actionStrip = ActionStrip.Builder()
-            for (button in mapButtons) {
-                actionStrip.addAction(button.getTemplate())
+
+            for (button in mapActionStripButtons) {
+                actionStrip.addAction(button.getTemplate(isForPanning = button.isForPanning))
             }
-            actionStrip.addAction(Action.PAN)
+
+            for (button in mapButtons) {
+                if (!button.showInActionStrip) actionStrip.addAction(button.getTemplate())
+            }
             mapTemplate.setMapActionStrip(actionStrip.build())
         }
 
-        if (leadingNavigationBarButtons.isNotEmpty() || trailingNavigationBarButtons.isNotEmpty()) {
+        val actionStripButtons = mapButtons.filter { it.showInActionStrip }
+
+        if (leadingNavigationBarButtons.isNotEmpty() || trailingNavigationBarButtons.isNotEmpty() || actionStripButtons.isNotEmpty()) {
             val actionStrip = ActionStrip.Builder()
-            for (button in leadingNavigationBarButtons) {
+
+            for (button in actionStripButtons) {
                 actionStrip.addAction(button.getTemplate())
             }
+
+            for (button in leadingNavigationBarButtons) {
+                if (!button.showInMapActionStrip) actionStrip.addAction(button.getTemplate())
+            }
+
             for (button in trailingNavigationBarButtons) {
-                actionStrip.addAction(button.getTemplate())
+                if (!button.showInMapActionStrip) actionStrip.addAction(button.getTemplate())
             }
             mapTemplate.setActionStrip(actionStrip.build())
         }
+
+        mapTemplate.setPanModeListener { isPanningMode ->
+            val configurations = AndroidAutoService.session?.carContext?.resources?.configuration
+
+            if (configurations?.touchscreen == TOUCHSCREEN_NOTOUCH) {
+                togglePanningInterface(isPanningMode)
+            }
+        }
+
         _super = mapTemplate.build()
         return _super
     }
@@ -288,4 +313,14 @@ fun FCPMapTemplate.dismissPanningInterface() {
 
     fcpMapViewController?.showSubviews()
     fcpMapViewController?.mapController?.navigationHelper?.startCameraTracking()
+}
+
+/** Toggles the panning interface. */
+fun FCPMapTemplate.togglePanningInterface(isPanningMode: Bool = false) {
+    if (isPanningInterfaceVisible == isPanningMode) return
+
+    FCPStreamHandlerPlugin.sendEvent(
+        FCPChannelTypes.onPanningInterfaceToggled.name,
+        mapOf("elementId" to elementId)
+    )
 }

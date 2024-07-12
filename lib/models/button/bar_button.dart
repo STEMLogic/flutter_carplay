@@ -24,6 +24,16 @@ class CPBarButton {
   /// The enabled state of the bar button.
   final bool isEnabled;
 
+  /// Weather the map button is for Map Action strip of the map.
+  ///
+  /// Available only on Android Auto.
+  final bool showInMapActionStrip;
+
+  /// Weather the map button is for panning the map.
+  ///
+  /// Available only on Android Auto.
+  final bool isForPanning;
+
   /// The style to use when displaying the button.
   /// Default is [CPBarButtonStyles.rounded]
   final CPBarButtonStyles style;
@@ -34,6 +44,8 @@ class CPBarButton {
   /// Creates [CPBarButton]
   CPBarButton({
     required this.onPressed,
+    this.isForPanning = false,
+    this.showInMapActionStrip = false,
     this.style = CPBarButtonStyles.rounded,
     this.isEnabled = true,
     this.image,
@@ -48,8 +60,10 @@ class CPBarButton {
         );
 
   Map<String, dynamic> toJson() => {
-        'isEnabled': isEnabled,
+        'showInMapActionStrip': showInMapActionStrip,
+        'isForPanning': isForPanning,
         '_elementId': _elementId,
+        'isEnabled': isEnabled,
         if (title != null) 'title': title,
         if (image != null) 'image': image,
         'style': style.name,
@@ -60,8 +74,10 @@ class CPBarButton {
     String? title,
     String? image,
     bool? isEnabled,
-    CPBarButtonStyles? style,
+    bool? isForPanning,
     VoidCallback? onPressed,
+    CPBarButtonStyles? style,
+    bool? showInMapActionStrip,
   }) {
     return CPBarButton(
       title: title ?? this.title,
@@ -69,6 +85,8 @@ class CPBarButton {
       style: style ?? this.style,
       onPressed: onPressed ?? this.onPressed,
       isEnabled: isEnabled ?? this.isEnabled,
+      isForPanning: isForPanning ?? this.isForPanning,
+      showInMapActionStrip: showInMapActionStrip ?? this.showInMapActionStrip,
     );
   }
 

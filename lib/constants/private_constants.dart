@@ -141,6 +141,9 @@ enum FCPChannelTypes {
   /// Event for dismissing the panning interface in CarPlay.
   dismissPanningInterface,
 
+  /// Event for toggling the panning interface in Android Auto.
+  onPanningInterfaceToggled,
+
   /// Event for starting a navigation in CarPlay.
   startNavigation,
 

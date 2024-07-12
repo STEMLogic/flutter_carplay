@@ -142,6 +142,10 @@ class FlutterCarplay {
         case FCPChannelTypes.onSpeechCompleted:
           _carPlayController
               .processFCPSpeakerOnComplete(event['data']['elementId']);
+        case FCPChannelTypes.onPanningInterfaceToggled:
+          _carPlayController.processPanningInterfaceToggled(
+            event['data']['elementId'],
+          );
         case FCPChannelTypes.onManeuverActionTextRequested:
           final data = event['data'];
           _onManeuverActionTextRequested?.call(

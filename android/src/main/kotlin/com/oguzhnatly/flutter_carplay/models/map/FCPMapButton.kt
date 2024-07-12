@@ -28,6 +28,9 @@ class FCPMapButton(obj: Map<String, Any>) {
     /// A Boolean value indicating whether the map button is hidden.
     private var isHidden: Bool
 
+    /// A Boolean value indicating whether the map button is shown in the action strip.
+    var showInActionStrip: Bool
+
     /// The image associated with the map button.
     private var image: UIImage?
 
@@ -42,13 +45,12 @@ class FCPMapButton(obj: Map<String, Any>) {
         elementId = elementIdValue!!
         isEnabled = obj["isEnabled"] as? Bool ?: true
         isHidden = obj["isHidden"] as? Bool ?: false
+        showInActionStrip = obj["showInActionStrip"] as? Bool ?: false
         focusedImage = (obj["focusedImage"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
         image =
             focusedImage ?: (obj["image"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
 
-        (obj["tintColor"] as? Long)?.let {
-            image = image?.withColor(it)
-        }
+        (obj["tintColor"] as? Long)?.let { image = image?.withColor(it) }
 
         //        image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
         //            darkImage: obj["darkImage"] as? String)
@@ -60,19 +62,13 @@ class FCPMapButton(obj: Map<String, Any>) {
 
     /** Returns the underlying CPMapButton instance configured with the specified properties. */
     fun getTemplate(): CPMapButton {
-        val action =
-            Action.Builder().setEnabled(isEnabled).setIcon(image!!).setOnClickListener {
-                // Dispatch an event when the bar button is pressed.
-                FCPStreamHandlerPlugin.sendEvent(
-                    type = FCPChannelTypes.onMapButtonPressed.name,
-                    data = mapOf("elementId" to elementId)
-                )
-            }
-
-        //        mapButton.isHidden = isHidden
-        //        mapButton.isEnabled = isEnabled
-        //        mapButton.focusedImage = focusedImage
-        //        mapButton.image = image
+        val action = Action.Builder().setEnabled(isEnabled).setIcon(image!!).setOnClickListener {
+            // Dispatch an event when the bar button is pressed.
+            FCPStreamHandlerPlugin.sendEvent(
+                type = FCPChannelTypes.onMapButtonPressed.name,
+                data = mapOf("elementId" to elementId)
+            )
+        }
 
         _super = action.build()
         return _super

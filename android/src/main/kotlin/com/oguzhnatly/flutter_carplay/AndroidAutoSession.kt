@@ -99,14 +99,15 @@ class AndroidAutoSession : Session() {
 
                 override fun onStop(owner: LifecycleOwner) {
                     Logger.log("onStop")
-                    FlutterCarplayTemplateManager.fcpConnectionStatus =
-                        FCPConnectionTypes.DISCONNECTED
 
                     super.onStop(owner)
                 }
 
                 override fun onDestroy(owner: LifecycleOwner) {
                     Logger.log("onDestroy")
+
+                    FlutterCarplayTemplateManager.fcpConnectionStatus =
+                        FCPConnectionTypes.DISCONNECTED
 
                     super.onDestroy(owner)
                 }

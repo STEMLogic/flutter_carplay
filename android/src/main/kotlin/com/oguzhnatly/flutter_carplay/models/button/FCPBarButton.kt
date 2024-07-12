@@ -34,32 +34,42 @@ class FCPBarButton(obj: Map<String, Any>) {
     /// The enabled state of the bar button.
     private var isEnabled: Bool
 
+    /// A Boolean value indicating whether the map button is for panning.
+    var isForPanning: Bool
+
+    /// A Boolean value indicating whether the map button is shown in the map action strip.
+    var showInMapActionStrip: Bool
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         assert(elementIdValue != null) { "Missing required keys in dictionary for FCPBarButton initialization." }
         elementId = elementIdValue!!
         title = obj["title"] as? String
-
-        (obj["image"] as? String)?.let {
-            image = UIImageObject.fromFlutterAsset(it)
-        }
+        (obj["image"] as? String)?.let { image = UIImageObject.fromFlutterAsset(it) }
         isEnabled = obj["isEnabled"] as? Bool ?: true
+        isForPanning = obj["isForPanning"] as? Bool ?: false
+        showInMapActionStrip = obj["showInMapActionStrip"] as? Bool ?: false
         style =
             if (obj["style"] as? String == "none") CPBarButtonStyle.none else CPBarButtonStyle.rounded
     }
 
     /** Returns the underlying CPBarButton instance configured with the specified properties. */
-    fun getTemplate(): CPBarButton {
-        val action = Action.Builder().setEnabled(isEnabled)
-            .setOnClickListener {
+    fun getTemplate(isForPanning: Bool = false): CPBarButton {
+        val action = if (isForPanning) Action.Builder(Action.PAN) else Action.Builder()
+        action.setEnabled(isEnabled)
+
+        if (!isForPanning) {
+            action.setOnClickListener {
                 // Dispatch an event when the bar button is pressed.
                 FCPStreamHandlerPlugin.sendEvent(
                     type = FCPChannelTypes.onBarButtonPressed.name,
                     data = mapOf("elementId" to elementId)
                 )
             }
+        }
+
         when {
-            title != null -> action.setTitle(title!!)
+            !isForPanning && title != null -> action.setTitle(title!!)
             image != null -> action.setIcon(image!!)
             else -> {}
         }

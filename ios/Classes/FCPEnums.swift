@@ -160,6 +160,9 @@ enum FCPChannelTypes {
     /// Event for dismissing the panning interface in CarPlay.
     static let dismissPanningInterface = "dismissPanningInterface"
 
+    /// Event for toggling the panning interface in Android Auto.
+    static let onPanningInterfaceToggled = "onPanningInterfaceToggled"
+
     /// Event for start navigation.
     static let startNavigation = "startNavigation"
 
