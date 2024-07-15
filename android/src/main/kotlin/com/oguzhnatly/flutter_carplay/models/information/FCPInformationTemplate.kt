@@ -101,6 +101,7 @@ class FCPInformationTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
     /** Returns the underlying CPInformationTemplate instance configured with the specified properties. */
     override fun getTemplate(): CPInformationTemplate {
         val paneBuilder = Pane.Builder()
+        paneBuilder.setLoading(informationItems.isEmpty())
         informationItems.forEach {
             paneBuilder.addRow(it)
         }
