@@ -14,8 +14,14 @@ class CPSearchTemplate {
   final void Function(String, void Function(List<CPListItem>))
       onSearchTextUpdated;
 
+  /// A callback function that CarPlay invokes when the user presses the search button.
+  final void Function()? onSearchButtonPressed;
+
   /// Creates [CPSearchTemplate]
-  CPSearchTemplate({required this.onSearchTextUpdated});
+  CPSearchTemplate({
+    required this.onSearchTextUpdated,
+    this.onSearchButtonPressed,
+  });
 
   Map<String, dynamic> toJson() => {'_elementId': _elementId};
 

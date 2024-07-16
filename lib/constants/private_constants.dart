@@ -33,6 +33,9 @@ enum FCPChannelTypes {
   /// Event triggered when the search is cancelled in CarPlay.
   onSearchCancelled,
 
+  /// Event triggered when the search button is pressed in CarPlay.
+  onSearchButtonPressed,
+
   /// Event triggered when the information template is popped in CarPlay.
   onInformationTemplatePopped,
 

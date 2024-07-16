@@ -101,6 +101,10 @@ class FlutterCarplay {
           _carPlayController.processFCPSearchCancelledChannel(
             event['data']['elementId'],
           );
+        case FCPChannelTypes.onSearchButtonPressed:
+          _carPlayController.processFCPSearchButtonPressedChannel(
+            event['data']['elementId'],
+          );
         case FCPChannelTypes.onInformationTemplatePopped:
           _onInformationTemplatePopped?.call();
           _carPlayController.processFCPInformationTemplatePoppedChannel(

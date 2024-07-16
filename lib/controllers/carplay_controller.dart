@@ -468,6 +468,19 @@ class FlutterCarplayController {
     }
   }
 
+  /// Processes the FCPSearchButtonPressedChannel
+  ///
+  /// Parameters:
+  /// - elementId: The id of the [CPSearchTemplate]
+  void processFCPSearchButtonPressedChannel(String elementId) {
+    for (final template in templateHistory) {
+      if (template is CPSearchTemplate && template.uniqueId == elementId) {
+        template.onSearchButtonPressed?.call();
+        return;
+      }
+    }
+  }
+
   /// Processes the FCPInformationTemplatePoppedChannel
   ///
   /// Parameters:

@@ -81,6 +81,12 @@ extension FCPSearchTemplate: CPSearchTemplateDelegate {
         }
     }
 
+    func searchTemplateSearchButtonPressed(_: CPSearchTemplate) {
+        DispatchQueue.main.async {
+            FCPStreamHandlerPlugin.sendEvent(type: FCPChannelTypes.onSearchButtonPressed, data: ["elementId": self.elementId])
+        }
+    }
+
     func searchPerformed(_ searchResults: [FCPListItem]) {
         let results = searchResults.map {
             let obj = $0.get
