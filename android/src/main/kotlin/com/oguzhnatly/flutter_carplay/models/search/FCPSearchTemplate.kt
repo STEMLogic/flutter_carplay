@@ -18,13 +18,13 @@ import kotlinx.coroutines.Dispatchers
  * @param obj A dictionary containing the properties of the search template.
  */
 class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.SearchCallback {
-
     /// The underlying CPSearchTemplate instance.
     private lateinit var _super: CPSearchTemplate
 
     /// A debounce object for optimizing search events.
     private var debounce = Debounce(CoroutineScope(Dispatchers.Main))
 
+    /// The list of items to be displayed in the search template.
     private var resultItems: ItemList? = null
 
     init {
@@ -57,6 +57,7 @@ class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.S
         return _super
     }
 
+    /** Handles the search text change event. */
     override fun onSearchTextChanged(searchText: String) {
         debounce.debounce(interval = 500L) {
             FCPStreamHandlerPlugin.sendEvent(
@@ -66,6 +67,15 @@ class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.S
         }
     }
 
+    /** Handles the search button press event. */
+    override fun onSearchSubmitted(searchText: String) {
+        FCPStreamHandlerPlugin.sendEvent(
+            type = FCPChannelTypes.onSearchButtonPressed.name,
+            data = mapOf("elementId" to elementId)
+        )
+    }
+
+    /** Handles the search performed event. */
     fun searchPerformed(searchResults: List<FCPListItem>) {
         val builder = ItemList.Builder()
         searchResults.forEach {
