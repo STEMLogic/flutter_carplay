@@ -41,6 +41,8 @@ class AndroidAutoSession : Session() {
     /// A debounce object for optimizing screen push.
     private val bouncer = Debounce(CoroutineScope(Dispatchers.Main))
 
+    val isStackOverflow get() = screenManager.screenStack.size >= 5
+
     /**
      * Creates and returns a [Screen] for the given [Intent].
      *
@@ -170,7 +172,7 @@ class AndroidAutoSession : Session() {
      */
     fun push(template: FCPTemplate, result: MethodChannel.Result? = null) {
         // Check if the navigation hierarchy exceeds 5 templates
-        if (screenManager.stackSize >= 5) {
+        if (isStackOverflow) {
             Logger.log("Template navigation hierarchy exceeded")
             result?.error(
                 "0",
@@ -227,7 +229,7 @@ class AndroidAutoSession : Session() {
      */
     fun presentTemplate(template: FCPTemplate, result: MethodChannel.Result? = null) {
         // Check if the navigation hierarchy exceeds 5 templates
-        if (screenManager.stackSize >= 5) {
+        if (isStackOverflow) {
             Logger.log("Template navigation hierarchy exceeded")
             result?.error(
                 "0",
