@@ -855,13 +855,13 @@ private fun FlutterCarplayPlugin.Companion.createRootTemplate(
 
     // Create an FCPRootTemplate based on the provided runtime type
     return when (runtimeType) {
-        //        FCPTabBarTemplate::class.java.simpleName -> FCPTabBarTemplate(rootTemplateArgs)
-        FCPGridTemplate::class.java.simpleName -> FCPGridTemplate(rootTemplateArgs)
-        FCPInformationTemplate::class.java.simpleName -> FCPInformationTemplate(rootTemplateArgs)
-        //        FCPPointOfInterestTemplate::class.java.simpleName ->
+        //        "FCPTabBarTemplate" -> FCPTabBarTemplate(rootTemplateArgs)
+        "FCPGridTemplate" -> FCPGridTemplate(rootTemplateArgs)
+        "FCPInformationTemplate" -> FCPInformationTemplate(rootTemplateArgs)
+        //        "FCPPointOfInterestTemplate" ->
         // FCPPointOfInterestTemplate(rootTemplateArgs)
-        FCPMapTemplate::class.java.simpleName -> FCPMapTemplate(rootTemplateArgs)
-        FCPListTemplate::class.java.simpleName -> {
+        "FCPMapTemplate" -> FCPMapTemplate(rootTemplateArgs)
+        "FCPListTemplate" -> {
             FCPListTemplate(obj = rootTemplateArgs, templateType = FCPListTemplateTypes.DEFAULT)
         }
 
@@ -963,21 +963,21 @@ private fun FlutterCarplayPlugin.Companion.pushTemplate(
 
     // Create the appropriate FCPTemplate based on the runtime type
     val pushTemplate = when (runtimeType) {
-        //        FCPTabBarTemplate::class.java.simpleName ->
+        //        "FCPTabBarTemplate" ->
         //             FCPTabBarTemplate(obj = templateArgs)
         //
-        FCPGridTemplate::class.java.simpleName -> FCPGridTemplate(obj = templateArgs)
+        "FCPGridTemplate" -> FCPGridTemplate(obj = templateArgs)
         //
-        FCPInformationTemplate::class.java.simpleName -> FCPInformationTemplate(obj = templateArgs)
+        "FCPInformationTemplate" -> FCPInformationTemplate(obj = templateArgs)
         //
-        //        FCPPointOfInterestTemplate::class.java.simpleName ->
+        //        "FCPPointOfInterestTemplate" ->
         //             FCPPointOfInterestTemplate(obj = templateArgs)
         //
-        FCPMapTemplate::class.java.simpleName -> FCPMapTemplate(obj = templateArgs)
+        "FCPMapTemplate" -> FCPMapTemplate(obj = templateArgs)
         //
-        FCPSearchTemplate::class.java.simpleName -> FCPSearchTemplate(obj = templateArgs)
+        "FCPSearchTemplate" -> FCPSearchTemplate(obj = templateArgs)
 
-        FCPListTemplate::class.java.simpleName -> {
+        "FCPListTemplate" -> {
             FCPListTemplate(obj = templateArgs, templateType = FCPListTemplateTypes.DEFAULT)
         }
 
