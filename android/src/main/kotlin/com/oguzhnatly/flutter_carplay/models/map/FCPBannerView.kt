@@ -4,6 +4,8 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Rect
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -44,8 +46,13 @@ class FCPBannerView {
                 } else {
                     mapView?.mapScene?.removeMapImageOverlay(it)
                     mapView?.mapScene?.addMapImageOverlay(it)
-                    fcpMapViewController?.overlayView?.getView()
-                    fcpMapViewController?.tripPreview?.getView()
+                    Handler(Looper.getMainLooper()).postDelayed(
+                        {
+                            fcpMapViewController?.overlayView?.getView()
+                            fcpMapViewController?.tripPreview?.getView()
+                        },
+                        100L
+                    )
                 }
             }
             field = value

@@ -101,12 +101,15 @@ class FCPMapViewController : SurfaceCallback {
             FlutterCarplayTemplateManager.isDashboardSceneActive = value
         }
 
+    /// The map template associated with the map view controller.
+    private val fcpMapTemplate: FCPMapTemplate?
+        get() = FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate
+
     /// Whether the dashboard scene is active.
     var isPanningInterfaceVisible
-        get() = (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.isPanningInterfaceVisible
-            ?: false
+        get() = fcpMapTemplate?.isPanningInterfaceVisible ?: false
         set(value) {
-            (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.togglePanningInterface(value)
+            fcpMapTemplate?.togglePanningInterface(value)
         }
 
     /// Should stop voice assistant.
@@ -114,6 +117,9 @@ class FCPMapViewController : SurfaceCallback {
 
     /// The voice instructions toggle button.
     var isVoiceInstructionsMuted = false
+
+    /// Whether navigation is in progress.
+    var isNavigationInProgress = false
 
     /// Should show banner.
     var shouldShowBanner = false
@@ -367,7 +373,7 @@ class FCPMapViewController : SurfaceCallback {
 
             if (isPanningInterfaceVisible) return@recenterMapViewHandler
 
-            if (mapController?.navigationHelper?.isNavigationInProgress == true) {
+            if (isNavigationInProgress) {
                 mapController?.navigationHelper?.startCameraTracking()
             } else {
                 val initialMarkerCoordinates =
@@ -430,6 +436,18 @@ class FCPMapViewController : SurfaceCallback {
                 Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
             )
             flyToCoordinates(defaultCoordinates)
+
+            // Refresh the views
+            bannerView.getView()
+            overlayView.getView()
+            tripPreview.getView()
+
+            updateCameraPrincipalPoint()
+
+            if (isNavigationInProgress) {
+                fcpMapTemplate?.trip?.let { startNavigation(it) }
+            }
+            
             mapLoadedOnce = true
         }
     }
@@ -698,7 +716,7 @@ fun FCPMapViewController.showSubviews() {
  * @param accuracy The accuracy of the marker
  */
 fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accuracy: Double) {
-    if (mapController?.navigationHelper?.isNavigationInProgress == true) {
+    if (isNavigationInProgress) {
         mapController?.removeMarker(MapMarkerType.INITIAL)
         mapController?.removePolygon(MapMarkerType.INITIAL)
         return

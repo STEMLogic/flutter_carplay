@@ -36,6 +36,7 @@ import com.here.sdk.trafficawarenavigation.DynamicRoutingEngine.StartException
 import com.here.sdk.trafficawarenavigation.DynamicRoutingEngineOptions
 import com.here.sdk.trafficawarenavigation.DynamicRoutingListener
 import com.here.time.Duration
+import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
 
@@ -69,8 +70,6 @@ class NavigationHelper(private val mapView: MapSurface) {
     /// The normalized principal point of the VisualNavigator camera.
     private var visualNavigatorCameraPoint: Anchor2D? = null
 
-    /// Whether navigation is in progress.
-    var isNavigationInProgress = false
 
     /// The last known location.
     val lastKnownLocation: Location?
@@ -79,6 +78,13 @@ class NavigationHelper(private val mapView: MapSurface) {
     /// FCP Map View Controller instance
     private val fcpMapViewController: FCPMapViewController?
         get() = FlutterCarplayPlugin.rootViewController as? FCPMapViewController
+
+    /// Whether navigation is in progress.
+    private var isNavigationInProgress: Bool
+        get() = fcpMapViewController?.isNavigationInProgress ?: false
+        set(value) {
+            fcpMapViewController?.isNavigationInProgress = value
+        }
 
     init {
         try {

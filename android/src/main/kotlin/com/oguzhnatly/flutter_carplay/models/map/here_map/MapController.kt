@@ -107,7 +107,6 @@ class MapController(private val mapView: MapSurface) {
 
         // Re-Routing callback to find new route
         reroutingHandler = { startWayPoint, completion ->
-
             (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.update(
                 routingInfo = RoutingInfo.Builder().setLoading(true).build()
             )

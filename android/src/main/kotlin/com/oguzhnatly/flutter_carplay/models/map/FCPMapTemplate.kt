@@ -72,6 +72,9 @@ class FCPMapTemplate(obj: Map<String, Any>) : FCPRootTemplate() {
     /// The current destination travel estimates associated with the map template.
     private var destinationTravelEstimates: TravelEstimate? = null
 
+    /// The trip associated with the map template.
+    var trip: FCPTrip? = null
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         assert(elementIdValue != null) {
@@ -286,6 +289,7 @@ fun FCPMapTemplate.startNavigation(trip: FCPTrip) {
 
     hideTripPreviews()
 
+    this.trip = trip
     fcpMapViewController?.startNavigation(trip)
     navigationSession?.navigationStarted()
     update(routingInfo = RoutingInfo.Builder().setLoading(true).build())
@@ -295,6 +299,7 @@ fun FCPMapTemplate.startNavigation(trip: FCPTrip) {
 fun FCPMapTemplate.stopNavigation() {
     navigationSession?.navigationEnded()
 
+    trip = null
     fcpMapViewController?.stopNavigation()
     update(removeRoutingInfo = true)
 }
