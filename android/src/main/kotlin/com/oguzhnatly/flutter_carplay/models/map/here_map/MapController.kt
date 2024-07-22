@@ -53,6 +53,7 @@ import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.Logger
 import com.oguzhnatly.flutter_carplay.MapMarkerType
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
+import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
 import java.util.Locale
 import java.util.TimeZone
 
@@ -68,7 +69,7 @@ data class CGSize(val width: Double, val height: Double)
  * An app that allows to calculate a route and start navigation, using either platform positioning
  * or simulated locations.
  */
-class MapController(private val mapView: MapSurface) {
+class MapController {
     private val mapMarkers: MutableList<MapMarker> = ArrayList()
     private val mapPolygons: MutableList<MapPolygon> = ArrayList()
     private val mapPolylineList: MutableList<MapPolyline?> = ArrayList()
@@ -76,6 +77,9 @@ class MapController(private val mapView: MapSurface) {
     private var destinationWaypoint: Waypoint? = null
     private var setLongpressDestination = false
     private var routeCalculator: RouteCalculator
+
+    private val mapView: MapSurface?
+        get() = (FlutterCarplayPlugin.rootViewController as? FCPMapViewController)?.mapView
 
     /// NavigationHelper instance
     val navigationHelper: NavigationHelper
@@ -91,13 +95,13 @@ class MapController(private val mapView: MapSurface) {
     init {
         val distanceInMeters =
             MapMeasure(MapMeasure.Kind.DISTANCE, ConstantsEnum.DEFAULT_DISTANCE_IN_METERS)
-        this.mapView.camera.lookAt(ConstantsEnum.DEFAULT_MAP_CENTER, distanceInMeters)
+        mapView?.camera?.lookAt(ConstantsEnum.DEFAULT_MAP_CENTER, distanceInMeters)
 
         routeCalculator = RouteCalculator(
             SDKNativeEngine.getSharedInstance()?.isOfflineMode ?: false
         )
 
-        navigationHelper = NavigationHelper(mapView)
+        navigationHelper = NavigationHelper()
         navigationHelper.startLocationProvider()
 
         // Toggle offline mode to change the RouteCalculator instance
@@ -182,8 +186,8 @@ class MapController(private val mapView: MapSurface) {
 
         if (marker != null) {
             marker.coordinates = coordinates
-            mapView.mapScene.removeMapMarker(marker)
-            mapView.mapScene.addMapMarker(marker)
+            mapView?.mapScene?.removeMapMarker(marker)
+            mapView?.mapScene?.addMapMarker(marker)
         } else {
             val mapImage = MapImage(
                 markerImage,
@@ -193,7 +197,7 @@ class MapController(private val mapView: MapSurface) {
             )
             val mapMarker = MapMarker(coordinates, mapImage)
             mapMarker.metadata = metadata
-            mapView.mapScene.addMapMarker(mapMarker)
+            mapView?.mapScene?.addMapMarker(mapMarker)
             mapMarkers.add(mapMarker)
         }
     }
@@ -212,15 +216,15 @@ class MapController(private val mapView: MapSurface) {
 
         if (polygon != null) {
             polygon.geometry = GeoPolygon(GeoCircle(coordinate, accuracy))
-            mapView.mapScene.removeMapPolygon(polygon)
-            mapView.mapScene.addMapPolygon(polygon)
+            mapView?.mapScene?.removeMapPolygon(polygon)
+            mapView?.mapScene?.addMapPolygon(polygon)
         } else {
             val mapPolygon = MapPolygon(
                 GeoPolygon(GeoCircle(coordinate, accuracy)),
                 Color.valueOf(0x550BC7C2)
             )
             mapPolygon.metadata = metadata
-            mapView.mapScene.addMapPolygon(mapPolygon)
+            mapView?.mapScene?.addMapPolygon(mapPolygon)
             mapPolygons.add(mapPolygon)
         }
     }
@@ -272,7 +276,7 @@ class MapController(private val mapView: MapSurface) {
         startWaypoint?.headingInDegrees = location.bearingInDegrees
 
         // Update the camera position.
-        mapView.camera.lookAt(location.coordinates)
+        mapView?.camera?.lookAt(location.coordinates)
 
         // When using real GPS locations, we always start from the current location of user.
         if (isSimulated && destinationWaypoint == null) {
@@ -377,7 +381,7 @@ class MapController(private val mapView: MapSurface) {
             Logger.log("MapMeasureDependentRenderSize Exception:", e.error.name)
         }
 
-        routeMapPolyline?.let { mapView.mapScene.addMapPolyline(it) }
+        routeMapPolyline?.let { mapView?.mapScene?.addMapPolyline(it) }
         mapPolylineList.add(routeMapPolyline)
     }
 
@@ -402,7 +406,7 @@ class MapController(private val mapView: MapSurface) {
     /** Clear the map markers. */
     private fun clearWaypointMapMarkers() {
         for (mapMarker in mapMarkers) {
-            mapView.mapScene.removeMapMarker(mapMarker)
+            mapView?.mapScene?.removeMapMarker(mapMarker)
         }
         mapMarkers.clear()
     }
@@ -410,7 +414,7 @@ class MapController(private val mapView: MapSurface) {
     /** Clear the map polygons. */
     private fun clearMapPolygons() {
         for (mapPolygon in mapPolygons) {
-            mapView.mapScene.removeMapPolygon(mapPolygon)
+            mapView?.mapScene?.removeMapPolygon(mapPolygon)
         }
         mapPolygons.clear()
     }
@@ -418,17 +422,17 @@ class MapController(private val mapView: MapSurface) {
     /** Clear the route. */
     private fun clearRoute() {
         for (mapPolyline in mapPolylineList) {
-            mapPolyline?.let { mapView.mapScene.removeMapPolyline(it) }
+            mapPolyline?.let { mapView?.mapScene?.removeMapPolyline(it) }
         }
         mapPolylineList.clear()
     }
 
     /** Set the long press gesture handler. */
     private fun setLongPressGestureHandler() {
-        mapView.gestures.longPressListener =
+        mapView?.gestures?.longPressListener =
             LongPressListener { gestureState: GestureState, touchPoint: Point2D? ->
                 val geoCoordinates: GeoCoordinates =
-                    touchPoint?.let { mapView.viewToGeoCoordinates(it) }
+                    touchPoint?.let { mapView?.viewToGeoCoordinates(it) }
                         ?: return@LongPressListener
                 if (gestureState == GestureState.BEGIN) {
                     if (setLongpressDestination) {
@@ -473,7 +477,7 @@ class MapController(private val mapView: MapSurface) {
      * @return The map view center.
      */
     private val mapViewCenter: GeoCoordinates
-        get() = mapView.camera.state.targetCoordinates
+        get() = mapView?.camera?.state?.targetCoordinates ?: GeoCoordinates(0.0, 0.0)
 
     /**
      * Get the marker coordinates.
@@ -500,7 +504,7 @@ class MapController(private val mapView: MapSurface) {
         }
 
         marker?.let { mapMarker ->
-            mapView.mapScene.removeMapMarker(mapMarker)
+            mapView?.mapScene?.removeMapMarker(mapMarker)
             mapMarkers.removeAll { it.metadata?.getString("marker") == markerType.name }
         }
     }
@@ -516,7 +520,7 @@ class MapController(private val mapView: MapSurface) {
         }
 
         polygon?.let { mapPolygon ->
-            mapView.mapScene.removeMapPolygon(mapPolygon)
+            mapView?.mapScene?.removeMapPolygon(mapPolygon)
             mapPolygons.removeAll { it.metadata?.getString("polygon") == markerType.name }
         }
     }

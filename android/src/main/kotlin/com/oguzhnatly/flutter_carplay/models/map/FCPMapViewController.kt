@@ -226,8 +226,8 @@ class FCPMapViewController : SurfaceCallback {
     override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
         mapSurface?.destroySurface()
         mapSurface = null
-        mapController?.detach()
-        mapController = null
+//        mapController?.detach()
+//        mapController = null
         mapView = null
         (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.resetCarContext()
         hideSubviews()
@@ -323,7 +323,7 @@ class FCPMapViewController : SurfaceCallback {
 
         if (mapView == null) return
 
-        if (mapController == null) mapController = MapController(mapView!!)
+//        if (mapController == null) mapController = MapController()
 
         // Disable traffic view support
         mapView!!.mapScene.disableFeatures(
@@ -445,9 +445,9 @@ class FCPMapViewController : SurfaceCallback {
             updateCameraPrincipalPoint()
 
             if (isNavigationInProgress) {
-                fcpMapTemplate?.trip?.let { startNavigation(it) }
+                mapController?.navigationHelper?.mapView = mapView
             }
-            
+
             mapLoadedOnce = true
         }
     }
