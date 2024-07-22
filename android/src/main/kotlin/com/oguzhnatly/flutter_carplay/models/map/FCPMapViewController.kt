@@ -323,7 +323,7 @@ class FCPMapViewController : SurfaceCallback {
 
         if (mapView == null) return
 
-//        if (mapController == null) mapController = MapController()
+        if (mapController == null) mapController = MapController()
 
         // Disable traffic view support
         mapView!!.mapScene.disableFeatures(

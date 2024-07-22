@@ -79,9 +79,9 @@ class NavigationHelper {
     private val fcpMapViewController: FCPMapViewController?
         get() = FlutterCarplayPlugin.rootViewController as? FCPMapViewController
 
-    var mapView: MapSurface? = null
+    var mapView: MapSurface?
+        get() = fcpMapViewController?.mapView
         set(value) {
-            field = value
             if (isNavigationInProgress && value != null) {
                 visualNavigator.startRendering(value)
             }
@@ -254,7 +254,7 @@ class NavigationHelper {
             }
         }
 
-        mapView?.let { visualNavigator.startRendering(it) }
+        fcpMapViewController?.mapView?.let { visualNavigator.startRendering(it) }
 
         val startGeoCoordinates = route.geometry.vertices[0]
         prefetchMapData(startGeoCoordinates)
