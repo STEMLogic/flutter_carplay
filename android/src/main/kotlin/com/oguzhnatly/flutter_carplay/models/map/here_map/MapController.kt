@@ -69,7 +69,7 @@ data class CGSize(val width: Double, val height: Double)
  * An app that allows to calculate a route and start navigation, using either platform positioning
  * or simulated locations.
  */
-class MapController {
+object MapController {
     private val mapMarkers: MutableList<MapMarker> = ArrayList()
     private val mapPolygons: MutableList<MapPolygon> = ArrayList()
     private val mapPolylineList: MutableList<MapPolyline?> = ArrayList()
@@ -82,7 +82,7 @@ class MapController {
         get() = (FlutterCarplayPlugin.rootViewController as? FCPMapViewController)?.mapView
 
     /// NavigationHelper instance
-    val navigationHelper: NavigationHelper
+    val navigationHelper: NavigationHelper = NavigationHelper
 
     /// lastKnownLocation getter
     val lastKnownLocation: Location?
@@ -101,7 +101,6 @@ class MapController {
             SDKNativeEngine.getSharedInstance()?.isOfflineMode ?: false
         )
 
-        navigationHelper = NavigationHelper()
         navigationHelper.startLocationProvider()
 
         // Toggle offline mode to change the RouteCalculator instance

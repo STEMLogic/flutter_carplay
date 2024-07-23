@@ -46,7 +46,7 @@ import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
  * The preferred device language determines the language for voice notifications used for TTS.
  * (Make sure to set language + region in device settings.)
  */
-class NavigationHelper {
+object NavigationHelper {
     /// The VisualNavigator instance.
     private var visualNavigator: VisualNavigator
 
@@ -79,13 +79,6 @@ class NavigationHelper {
     private val fcpMapViewController: FCPMapViewController?
         get() = FlutterCarplayPlugin.rootViewController as? FCPMapViewController
 
-    var mapView: MapSurface?
-        get() = fcpMapViewController?.mapView
-        set(value) {
-            if (isNavigationInProgress && value != null) {
-                visualNavigator.startRendering(value)
-            }
-        }
 
     /// Whether navigation is in progress.
     private var isNavigationInProgress: Bool
@@ -254,8 +247,8 @@ class NavigationHelper {
             }
         }
 
-        fcpMapViewController?.mapView?.let { visualNavigator.startRendering(it) }
 
+        startRendering()
         val startGeoCoordinates = route.geometry.vertices[0]
         prefetchMapData(startGeoCoordinates)
 
@@ -344,6 +337,14 @@ class NavigationHelper {
         herePositioningProvider.stopLocating()
     }
 
+    /** Start rendering. */
+    fun startRendering() {
+        fcpMapViewController?.mapView?.let {
+            visualNavigator.stopRendering()
+            visualNavigator.startRendering(it)
+        }
+    }
+
     /** Stops rendering. */
     fun stopRendering() {
         // It is recommended to stop rendering before leaving an activity.
@@ -351,7 +352,6 @@ class NavigationHelper {
         visualNavigator.stopRendering()
     }
 
-    companion object {
         private val TAG: String = NavigationHelper::class.java.name
-    }
+
 }

@@ -79,7 +79,7 @@ class FCPMapViewController : SurfaceCallback {
     var visibleArea = Rect(0, 0, 0, 0)
 
     /// The app associated with the map view controller.
-    var mapController: MapController? = null
+    var mapController: MapController? = MapController
 
     /// The size of the marker pin.
     val markerPinSize: Double
@@ -180,13 +180,8 @@ class FCPMapViewController : SurfaceCallback {
             }
 
             // Wait for the map surface to be valid
-            var count = 0
             while (mapSurface?.isValid == false) {
-                if (count > 5) break
-
-                Handler(Looper.getMainLooper()).postDelayed(
-                    { count++ }, 1000L
-                )
+                if (mapSurface?.isValid == true) break
             }
 
             // Set the map surface to the map view only if the map surface is valid
@@ -224,7 +219,7 @@ class FCPMapViewController : SurfaceCallback {
      * @param surfaceContainer the surface container that is being destroyed
      */
     override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
-        mapSurface?.destroySurface()
+        mapSurface?.destroy()
         mapSurface = null
 //        mapController?.detach()
 //        mapController = null
@@ -322,8 +317,6 @@ class FCPMapViewController : SurfaceCallback {
         }
 
         if (mapView == null) return
-
-        if (mapController == null) mapController = MapController()
 
         // Disable traffic view support
         mapView!!.mapScene.disableFeatures(
@@ -445,7 +438,7 @@ class FCPMapViewController : SurfaceCallback {
             updateCameraPrincipalPoint()
 
             if (isNavigationInProgress) {
-                mapController?.navigationHelper?.mapView = mapView
+                mapController?.navigationHelper?.startRendering()
             }
 
             mapLoadedOnce = true

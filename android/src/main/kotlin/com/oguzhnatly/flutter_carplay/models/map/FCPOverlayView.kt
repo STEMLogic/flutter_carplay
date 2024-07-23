@@ -131,6 +131,7 @@ class FCPOverlayView {
         linearLayout.measure(specWidth, specHeight)
         linearLayout.layout(0, 0, linearLayout.measuredWidth, linearLayout.measuredHeight)
 
+        if(linearLayout.measuredWidth <= 0 || linearLayout.measuredHeight <= 0) return
         val bitmap = Bitmap.createBitmap(
             linearLayout.measuredWidth,
             linearLayout.measuredHeight,
