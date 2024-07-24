@@ -20,6 +20,8 @@ import com.here.sdk.mapview.MapFeatures
 import com.here.sdk.mapview.MapMeasure
 import com.here.sdk.mapview.MapScheme
 import com.here.sdk.mapview.MapSurface
+import com.here.sdk.mapview.MapViewBase
+import com.here.sdk.mapview.MapViewLifecycleListener
 import com.here.sdk.routing.Waypoint
 import com.here.time.Duration
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
@@ -29,6 +31,7 @@ import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayTemplateManager
 import com.oguzhnatly.flutter_carplay.Logger
 import com.oguzhnatly.flutter_carplay.MapMarkerType
+import com.oguzhnatly.flutter_carplay.Throttle
 import com.oguzhnatly.flutter_carplay.models.map.here_map.CGSize
 import com.oguzhnatly.flutter_carplay.models.map.here_map.ConstantsEnum
 import com.oguzhnatly.flutter_carplay.models.map.here_map.MapController
@@ -46,7 +49,7 @@ import kotlin.math.min
 /** A custom Android Auto map view controller. */
 class FCPMapViewController : SurfaceCallback {
     /// The private map surface instance.
-    private var mapSurface: MapSurface? = null
+    private val mapSurface: MapSurface = MapSurface()
 
     /// The map view associated with the map view controller.
     var mapView: MapSurface? = null
@@ -143,7 +146,7 @@ class FCPMapViewController : SurfaceCallback {
     private var mapLoadedOnce = false
 
     /// A debounce object for optimizing surface events.
-    private var surfaceDebounce = Debounce(CoroutineScope(Dispatchers.Main))
+    private var surfaceDebounce = Throttle(CoroutineScope(Dispatchers.Main))
 
     /// A debounce object for optimizing camera updates.
     private var cameraUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
@@ -165,13 +168,13 @@ class FCPMapViewController : SurfaceCallback {
     override fun onSurfaceAvailable(surfaceContainer: SurfaceContainer) {
         if (!isSurfaceReady(surfaceContainer)) return
 
-        surfaceDebounce.debounce(500L) {
-            mapSurface = MapSurface()
+        surfaceDebounce.throttle(1000L) {
+//            mapSurface = MapSurface()
             mapLoadedOnce = false
             mapView = null
 
             AndroidAutoService.session?.carContext.let {
-                mapSurface?.setSurface(
+                mapSurface.setSurface(
                     it,
                     surfaceContainer.surface,
                     surfaceContainer.width,
@@ -180,12 +183,12 @@ class FCPMapViewController : SurfaceCallback {
             }
 
             // Wait for the map surface to be valid
-            while (mapSurface?.isValid == false) {
-                if (mapSurface?.isValid == true) break
+            while (mapSurface.isValid == false) {
+                if (mapSurface.isValid == true) break
             }
 
             // Set the map surface to the map view only if the map surface is valid
-            if (mapSurface?.isValid == true) mapView = mapSurface
+            if (mapSurface.isValid == true) mapView = mapSurface
 
             toggleSatelliteViewHandler = { isSatelliteViewEnabled: Bool ->
                 this.isSatelliteViewEnabled = isSatelliteViewEnabled
@@ -219,8 +222,8 @@ class FCPMapViewController : SurfaceCallback {
      * @param surfaceContainer the surface container that is being destroyed
      */
     override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
-        mapSurface?.destroy()
-        mapSurface = null
+        mapSurface?.destroySurface()
+//        mapSurface = null
 //        mapController?.detach()
 //        mapController = null
         mapView = null
