@@ -40,7 +40,7 @@ class FCPOverlayView {
     var width: Double = 0.0
     var isHidden: Boolean = true
         set(value) {
-            if (field == value) return
+            if (field == value || mapView == null) return
             mapImageOverlay?.let {
                 if (value) {
                     mapView?.mapScene?.removeMapImageOverlay(it)

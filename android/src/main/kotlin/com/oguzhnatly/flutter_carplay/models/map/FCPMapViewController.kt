@@ -222,7 +222,7 @@ class FCPMapViewController : SurfaceCallback {
      * @param surfaceContainer the surface container that is being destroyed
      */
     override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
-        mapSurface?.destroySurface()
+        mapSurface.destroySurface()
 //        mapSurface = null
 //        mapController?.detach()
 //        mapController = null
@@ -442,6 +442,9 @@ class FCPMapViewController : SurfaceCallback {
 
             if (isNavigationInProgress) {
                 mapController?.navigationHelper?.startRendering()
+            }else {
+                mapController?.navigationHelper?.stopRendering()
+                stopNavigation()
             }
 
             mapLoadedOnce = true
@@ -831,35 +834,6 @@ fun FCPMapViewController.stopNavigation() {
     mapController?.clearMap()
     updateMapCoordinatesHandler?.invoke(mapCoordinates)
 }
-
-/**
- * Pans the camera in the specified direction.
- *
- * @param direction The direction to pan
- */
-// fun FCPMapViewController.panInDirection(direction: CPMapTemplate.PanDirection) {
-//    Logger.log("Panning to ${direction}.")
-//
-//    var offset = mapView!!.camera.principalPoint
-//    when (direction) {
-//        down ->
-//            offset.y += mapView!!.viewportSize.height / 2.0
-//
-//        up ->
-//            offset.y -= mapView!!.viewportSize.height / 2.0
-//
-//        left ->
-//            offset.x -= mapView!!.viewportSize.width / 2.0
-//
-//        right ->
-//            offset.x += mapView!!.viewportSize.width / 2.0
-//
-//        else -> return
-//    }
-//
-//    // Update the Map camera position
-//    mapView!!.viewToGeoCoordinates(offset)?.let { flyToCoordinates(it) }
-// }
 
 /** Zooms in the camera. */
 fun FCPMapViewController.zoomInMapView() {
