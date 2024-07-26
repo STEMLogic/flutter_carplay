@@ -105,7 +105,10 @@ class FCPListTemplate(
         val listTemplate = ListTemplate.Builder().setLoading(isLoading)
 
         when {
-            sections.count() == 1 && sections.first().itemList.items.isEmpty() -> {
+            (sections.count() == 1 && sections.first().itemList.items.isEmpty())
+                    || (sections.count() > 1 && sections.all { it.itemList.items.isEmpty() })
+                    || sections.isEmpty()
+            -> {
                 if (!isLoading) {
                     val builder = ItemList.Builder()
                     emptyViewSubtitleVariants.firstOrNull()?.let { builder.setNoItemsMessage(it) }

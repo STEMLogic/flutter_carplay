@@ -13,7 +13,7 @@ enum CPBarButtonStyles {
 /// A button object for placement in a navigation bar.
 class CPBarButton {
   /// Unique id of the object.
-  final String _elementId = const Uuid().v4();
+  final String _elementId;
 
   /// The title displayed on the bar button.
   final String? title;
@@ -50,7 +50,9 @@ class CPBarButton {
     this.isEnabled = true,
     this.image,
     this.title,
-  })  : assert(
+    String? elementId,
+  })  : _elementId = elementId ?? const Uuid().v4(),
+        assert(
           image != null || title != null,
           "Properties [image] and [title] both can't be null at the same time.",
         ),

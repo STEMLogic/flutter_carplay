@@ -823,7 +823,7 @@ fun FCPMapViewController.startNavigation(trip: FCPTrip) {
     )
     mapController?.setDestinationWaypoint(wayPoint)
 
-    mapController?.addRouteSimulatedLocation()
+    mapController?.addRouteDeviceLocation()
 
     mapController?.removeMarker(MapMarkerType.INITIAL)
     mapController?.removePolygon(MapMarkerType.INITIAL)

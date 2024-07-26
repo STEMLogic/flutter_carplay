@@ -4,7 +4,7 @@ import 'package:uuid/uuid.dart';
 /// A button object for placement in a map.
 class CPMapButton {
   /// Unique id of the object.
-  final String _elementId = const Uuid().v4();
+  final String _elementId;
 
   /// The enabled state of the map button.
   final bool isEnabled;
@@ -42,7 +42,8 @@ class CPMapButton {
     this.tintColor,
     this.darkImage,
     this.image,
-  });
+    String? elementId,
+  }) : _elementId = elementId ?? const Uuid().v4();
 
   Map<String, dynamic> toJson() => {
         'showInActionStrip': showInActionStrip,
