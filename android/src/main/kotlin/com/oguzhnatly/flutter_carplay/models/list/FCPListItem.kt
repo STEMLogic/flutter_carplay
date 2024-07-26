@@ -14,7 +14,7 @@ import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.R
 import com.oguzhnatly.flutter_carplay.UIImage
-import com.oguzhnatly.flutter_carplay.UIImageObject
+import com.oguzhnatly.flutter_carplay.dynamicImage
 
 /**
  * A wrapper class for CPListItem with additional functionality.
@@ -77,20 +77,20 @@ class FCPListItem(obj: Map<String, Any>) {
         playbackProgress = obj["playbackProgress"] as? CGFloat
         isPlaying = obj["isPlaying"] as? Bool ?: false
         isEnabled = obj["isEnabled"] as? Bool ?: true
-        image = (obj["image"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
-        accessoryImage =
-            (obj["accessoryImage"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
-//        image = UIImage.dynamicImage(
-//            lightImage: obj["image"] as? String,
-//            darkImage: obj["darkImage"] as? String
-//        )
-//
-//        accessoryImage = UIImage.dynamicImage(
-//            lightImage: obj["accessoryImage"] as? String,
-//            darkImage: obj["accessoryDarkImage"] as? String
-//        )
-//
-//        setPlayingIndicatorLocation(obj["playingIndicatorLocation"] as? String)
+        //image = (obj["image"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
+        /*accessoryImage =
+            (obj["accessoryImage"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }*/
+        image = dynamicImage(
+            lightImage = obj["image"] as? String,
+            darkImage = obj["darkImage"] as? String
+        )
+
+        accessoryImage = dynamicImage(
+            lightImage = obj["accessoryImage"] as? String,
+            darkImage = obj["accessoryDarkImage"] as? String
+        )
+
+        //setPlayingIndicatorLocation(obj["playingIndicatorLocation"] as? String)
         setAccessoryType(obj["accessoryType"] as? String)
     }
 
@@ -182,10 +182,12 @@ class FCPListItem(obj: Map<String, Any>) {
         detailText?.let { this.detailText = it }
         isEnabled?.let { this.isEnabled = it }
         accessoryType?.let { setAccessoryType(it) }
-        image?.let { this.image = UIImageObject.fromFlutterAsset(it) }
-        accessoryImage?.let { this.accessoryImage = UIImageObject.fromFlutterAsset(it) }
-//        image?.let { this.image = UIImage.dynamicImage(lightImage= it, darkImage= darkImage) }
-//        accessoryImage?.let { this.accessoryImage = UIImage.dynamicImage(lightImage= it, darkImage= accessoryDarkImage) }
+        /*image?.let { this.image = UIImageObject.fromFlutterAsset(it) }
+        accessoryImage?.let { this.accessoryImage = UIImageObject.fromFlutterAsset(it) }*/
+        image?.let { this.image = dynamicImage(lightImage = it, darkImage = darkImage) }
+        accessoryImage?.let {
+            this.accessoryImage = dynamicImage(lightImage = it, darkImage = accessoryDarkImage)
+        }
 
 //        isPlaying?.let { this.isPlaying = it }
 //        playbackProgress?.let { this.playbackProgress = it }

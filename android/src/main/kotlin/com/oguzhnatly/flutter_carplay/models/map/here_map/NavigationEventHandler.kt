@@ -80,7 +80,7 @@ import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.Logger
-import com.oguzhnatly.flutter_carplay.UIImageObject
+import com.oguzhnatly.flutter_carplay.dynamicImage
 import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
@@ -920,15 +920,17 @@ class NavigationEventHandler {
             // Create CPManeuver instance and set appropriate properties
             val step = Step.Builder().setRoad(roadName).setCue(actionText).setManeuver(
                 CarManeuver.Builder(CarManeuver.TYPE_DEPART)
-                    .setIcon(UIImageObject.fromFlutterAsset("assets/icons/carplay/maneuvers/dark/$action.png"))
+                    .setIcon(
+                        dynamicImage(
+                            lightImage = "assets/icons/carplay/maneuvers/light/$action.png",
+                            darkImage = "assets/icons/carplay/maneuvers/dark/$action.png"
+                        )!!
+                    )
                     .build()
             ).build()
             val cpManeuver = RoutingInfo.Builder().setCurrentStep(
                 step, initialTravelEstimates.remainingDistance!!
             ).build()
-
-//            val symbolImage = UIImage.dynamicImage(lightImage: "assets/icons/carplay/maneuvers/light/\(action).png",
-//            darkImage: "assets/icons/carplay/maneuvers/dark/\(action).png")
 
             // Update the upcoming maneuver and the overall route estimates
             // It will change the maneuver in the map template automatically
@@ -974,7 +976,12 @@ class NavigationEventHandler {
                 ).setNextStep(
                     Step.Builder().setRoad(roadName).setCue(maneuver.text).setManeuver(
                         CarManeuver.Builder(CarManeuver.TYPE_DEPART)
-                            .setIcon(UIImageObject.fromFlutterAsset("assets/icons/carplay/maneuvers/dark/$action.png"))
+                            .setIcon(
+                                dynamicImage(
+                                    lightImage = "assets/icons/carplay/maneuvers/light/$action.png",
+                                    darkImage = "assets/icons/carplay/maneuvers/dark/$action.png"
+                                )!!
+                            )
                             .build()
                     ).build(),
                 ).build()

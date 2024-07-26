@@ -17,6 +17,70 @@ fun UIImage.withColor(color: Long, colorDark: Long? = null): UIImage {
         .build()
 }
 
+/// Creates a dynamic image that supports displaying a different image asset when dark mode is active.
+private fun dynamicImageWith(
+    light: UIImage,
+    light2x: UIImage? = null,
+    light3x: UIImage? = null,
+    dark: UIImage,
+    dark2x: UIImage? = null,
+    dark3x: UIImage? = null
+): UIImage {
+    // Currently dark theme is default for Android Auto. So we use dark images.
+    // Dynamic images for reference for future.
+    /*val image: UIImage = if (AndroidAutoService.session?.carContext?.isDarkMode == true) {
+        dark3x ?: (dark2x ?: dark)
+    } else {
+        light3x ?: (light2x ?: light)
+    }
+    return image*/
+    return dark3x ?: (dark2x ?: dark)
+}
+
+/**
+ * Get dynamic theme image
+ *
+ * @param lightImage The image name for light mode
+ * @param darkImage The image name for dark mode
+ * @return The UIImage
+ */
+fun dynamicImage(lightImage: String? = null, darkImage: String? = null): UIImage? {
+    when {
+        lightImage?.isNotEmpty() == true && darkImage?.isNotEmpty() == true -> {
+            return dynamicImageWith(
+                light = UIImageObject.fromFlutterAsset(lightImage),
+                light2x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@2x.png")),
+                light3x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@3x.png")),
+                dark = UIImageObject.fromFlutterAsset(darkImage),
+                dark2x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@2x.png")),
+                dark3x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@3x.png"))
+            )
+        }
+
+        lightImage?.isNotEmpty() == true -> {
+            return dynamicImageWith(
+                light = UIImageObject.fromFlutterAsset(lightImage),
+                light2x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@2x.png")),
+                light3x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@3x.png")),
+                dark = UIImageObject.fromFlutterAsset(""),
+            )
+        }
+
+        darkImage?.isNotEmpty() == true -> {
+            return dynamicImageWith(
+                light = UIImageObject.fromFlutterAsset(""),
+                dark = UIImageObject.fromFlutterAsset(darkImage),
+                dark2x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@2x.png")),
+                dark3x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@3x.png"))
+            )
+        }
+
+        else -> {
+            return null
+        }
+    }
+}
+
 /** Converts a snake case string to camel case. */
 fun String.snakeToLowerCamelCase(): String {
     return split("_").joinToString("") { word ->
@@ -50,4 +114,14 @@ fun String.pathToByteArray(): ByteArray {
         return byteArrayOf()
     }
     return byteArrayOf()
+}
+
+fun String.replaceLast(searchString: String, replacementString: String): String {
+    val lastIndex = lastIndexOf(searchString)
+    if (lastIndex == -1) {
+        return this
+    }
+    val prefix = substring(0, lastIndex)
+    val suffix = substring(lastIndex + searchString.length)
+    return "$prefix$replacementString$suffix"
 }
