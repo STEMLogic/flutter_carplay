@@ -7,6 +7,7 @@ import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.UIImage
 import com.oguzhnatly.flutter_carplay.UIImageObject
+import com.oguzhnatly.flutter_carplay.dynamicImage
 import com.oguzhnatly.flutter_carplay.withColor
 
 /**
@@ -48,16 +49,12 @@ class FCPMapButton(obj: Map<String, Any>) {
         showInActionStrip = obj["showInActionStrip"] as? Bool ?: false
         focusedImage = (obj["focusedImage"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
         image =
-            focusedImage ?: (obj["image"] as? String)?.let { UIImageObject.fromFlutterAsset(it) }
+            focusedImage ?: dynamicImage(
+                lightImage = obj["image"] as? String,
+                darkImage = obj["darkImage"] as? String
+            )
 
         (obj["tintColor"] as? Long)?.let { image = image?.withColor(it) }
-
-        //        image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
-        //            darkImage: obj["darkImage"] as? String)
-
-        //        if let focusedImage = obj["focusedImage"] as? String {
-        //            self.focusedImage = UIImage.dynamicImage(lightImage: focusedImage)
-        //        }
     }
 
     /** Returns the underlying CPMapButton instance configured with the specified properties. */

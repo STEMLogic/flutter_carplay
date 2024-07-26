@@ -22,8 +22,6 @@ class FCPVoiceControlState(obj: Map<String, Any>) {
     /// The name of the image associated with the voice control state.
     var image: UIImage? = null
 
-    /// A boolean value indicating whether the voice control state repeats.
-    //private var repeats: Bool
     init {
         val elementIdValue = obj["_elementId"] as? String
         val identifier = obj["identifier"] as? String
@@ -36,7 +34,6 @@ class FCPVoiceControlState(obj: Map<String, Any>) {
         this.identifier = identifier!!
         this.titleVariants = titleVariants!!
 
-        //repeats = obj["repeats"] as? Bool ?? false
         (obj["image"] as? String)?.let {
             image = UIImageObject.fromFlutterAsset(it)
         }
