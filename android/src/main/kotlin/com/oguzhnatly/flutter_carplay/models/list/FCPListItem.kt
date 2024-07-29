@@ -119,16 +119,7 @@ class FCPListItem(obj: Map<String, Any>) {
 
         when (accessoryType) {
             CPListItemAccessoryType.disclosureIndicator -> {
-                builder.addAction(
-                    Action.Builder().setIcon(
-                        CarIcon.Builder(
-                            IconCompat.createWithResource(
-                                AndroidAutoService.session?.carContext,
-                                R.drawable.next
-                            )
-                        ).build()
-                    ).setOnClickListener(onClick).build()
-                )
+                builder.setBrowsable(true)
             }
 
             CPListItemAccessoryType.none, CPListItemAccessoryType.cloud -> {}
