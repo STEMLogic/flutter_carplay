@@ -179,6 +179,8 @@ object MapController {
         markerSize: CGSize,
         metadata: Metadata?,
     ) {
+        if(mapView == null) return
+
         val marker = mapMarkers.find {
             it.metadata?.getString("marker") == metadata?.getString("marker")
         }
@@ -498,6 +500,8 @@ object MapController {
      * @param markerType The type of the map marker to be removed.
      */
     fun removeMarker(markerType: MapMarkerType) {
+        if(mapView == null) return
+
         val marker = mapMarkers.find {
             it.metadata?.getString("marker") == markerType.name
         }
@@ -514,6 +518,8 @@ object MapController {
      * @param markerType The type of the map marker.
      */
     fun removePolygon(markerType: MapMarkerType) {
+        if(mapView == null) return
+
         val polygon = mapPolygons.find {
             it.metadata?.getString("polygon") == markerType.name
         }

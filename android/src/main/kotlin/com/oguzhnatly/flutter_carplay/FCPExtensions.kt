@@ -48,10 +48,10 @@ fun dynamicImage(lightImage: String? = null, darkImage: String? = null): UIImage
     when {
         lightImage?.isNotEmpty() == true && darkImage?.isNotEmpty() == true -> {
             return dynamicImageWith(
-                light = UIImageObject.fromFlutterAsset(lightImage),
+                light = UIImageObject.fromFlutterAsset(lightImage) ?: CarIcon.ERROR,
                 light2x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@2x.png")),
                 light3x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@3x.png")),
-                dark = UIImageObject.fromFlutterAsset(darkImage),
+                dark = UIImageObject.fromFlutterAsset(darkImage) ?: CarIcon.ERROR,
                 dark2x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@2x.png")),
                 dark3x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@3x.png"))
             )
@@ -59,17 +59,17 @@ fun dynamicImage(lightImage: String? = null, darkImage: String? = null): UIImage
 
         lightImage?.isNotEmpty() == true -> {
             return dynamicImageWith(
-                light = UIImageObject.fromFlutterAsset(lightImage),
+                light = UIImageObject.fromFlutterAsset(lightImage) ?: CarIcon.ERROR,
                 light2x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@2x.png")),
                 light3x = UIImageObject.fromFlutterAsset(lightImage.replaceLast(".png", "@3x.png")),
-                dark = UIImageObject.fromFlutterAsset(""),
+                dark = UIImageObject.fromFlutterAsset("") ?: CarIcon.ERROR,
             )
         }
 
         darkImage?.isNotEmpty() == true -> {
             return dynamicImageWith(
-                light = UIImageObject.fromFlutterAsset(""),
-                dark = UIImageObject.fromFlutterAsset(darkImage),
+                light = UIImageObject.fromFlutterAsset("") ?: CarIcon.ERROR,
+                dark = UIImageObject.fromFlutterAsset(darkImage) ?: CarIcon.ERROR,
                 dark2x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@2x.png")),
                 dark3x = UIImageObject.fromFlutterAsset(darkImage.replaceLast(".png", "@3x.png"))
             )

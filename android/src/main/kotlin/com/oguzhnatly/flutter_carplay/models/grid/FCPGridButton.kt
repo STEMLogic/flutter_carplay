@@ -1,5 +1,6 @@
 package com.oguzhnatly.flutter_carplay.models.grid
 
+import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import com.oguzhnatly.flutter_carplay.CPGridButton
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
@@ -36,7 +37,7 @@ class FCPGridButton(obj: Map<String, Any>) {
         }
         elementId = elementIdValue!!
         titleVariants = titleVariantsValue!!
-        image = UIImageObject.fromFlutterAsset(imageValue!!)
+        image = UIImageObject.fromFlutterAsset(imageValue!!) ?: CarIcon.ERROR
     }
 
     /** Returns the underlying CPGridButton instance configured with the specified properties. */

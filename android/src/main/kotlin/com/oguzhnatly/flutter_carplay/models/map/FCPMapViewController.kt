@@ -169,7 +169,6 @@ class FCPMapViewController : SurfaceCallback {
         if (!isSurfaceReady(surfaceContainer)) return
 
         surfaceDebounce.throttle(1000L) {
-//            mapSurface = MapSurface()
             mapLoadedOnce = false
             mapView = null
 
@@ -329,9 +328,10 @@ class FCPMapViewController : SurfaceCallback {
         // Update the map coordinates
         updateMapCoordinatesHandler =
             updateMapCoordinatesHandler@{ mapCoordinates: MapCoordinates ->
+                this.mapCoordinates = mapCoordinates
+
                 if (mapView == null) return@updateMapCoordinatesHandler
 
-                this.mapCoordinates = mapCoordinates
                 when {
                     mapController?.lastKnownLocation != null -> {
                         val location = mapController!!.lastKnownLocation!!
@@ -363,11 +363,9 @@ class FCPMapViewController : SurfaceCallback {
 
         // Recenter map position
         recenterMapViewHandler = recenterMapViewHandler@{ recenterMapPosition: String ->
-            if (mapView == null) return@recenterMapViewHandler
-
             this.recenterMapPosition = recenterMapPosition
 
-            if (isPanningInterfaceVisible) return@recenterMapViewHandler
+            if (isPanningInterfaceVisible || mapView == null) return@recenterMapViewHandler
 
             if (isNavigationInProgress) {
                 mapController?.navigationHelper?.startCameraTracking()
@@ -427,6 +425,7 @@ class FCPMapViewController : SurfaceCallback {
         }
 
         if (!mapLoadedOnce) {
+            updateMapCoordinatesHandler?.invoke(mapCoordinates)
             mapView?.setWatermarkLocation(
                 Anchor2D(0.0, 1.0),
                 Point2D(-mapView!!.watermarkSize.width / 2, -mapView!!.watermarkSize.height / 2)
@@ -715,6 +714,8 @@ fun FCPMapViewController.showSubviews() {
  * @param accuracy The accuracy of the marker
  */
 fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accuracy: Double) {
+    if(mapView == null) return
+
     if (isNavigationInProgress) {
         mapController?.removeMarker(MapMarkerType.INITIAL)
         mapController?.removePolygon(MapMarkerType.INITIAL)
