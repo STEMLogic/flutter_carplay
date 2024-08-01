@@ -36,7 +36,7 @@ class FCPInformationItem(obj: Map<String, Any>) {
 
     /** Returns the underlying CPInformationItem instance configured with the specified properties. */
     fun getTemplate(): CPInformationItem {
-        val informationItem = Row.Builder().setTitle(title!!).addText(detail!!)
+        val informationItem = Row.Builder().setTitle(title ?: "").addText(detail ?: "")
         _super = informationItem.build()
         return _super
     }
