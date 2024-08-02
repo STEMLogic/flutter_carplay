@@ -32,6 +32,9 @@ var reroutingHandler: ((Waypoint, () -> Unit) -> Unit)? = null
 /// Completion handler for on location updated
 var locationUpdatedHandler: ((Location) -> Unit)? = null
 
+/// Completion handler for on location engine reset
+var locationEngineResetHandler: (() -> Unit)? = null
+
 /// Map coordinates to render marker on the map
 class MapCoordinates(
     var stationAddressCoordinates: GeoCoordinates? = null,

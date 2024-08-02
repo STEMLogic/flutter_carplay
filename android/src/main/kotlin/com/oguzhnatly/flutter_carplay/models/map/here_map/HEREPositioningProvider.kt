@@ -65,6 +65,18 @@ class HEREPositioningProvider {
             throw RuntimeException("Initialization failed: " + e.message)
         }
 
+        locationEngineResetHandler = {
+            locationEngine?.removeLocationListener(updateListener!!)
+            locationEngine?.removeLocationListener(onLocationUpdated)
+            locationEngine?.removeLocationStatusListener(locationStatusListener)
+            locationEngine?.stop()
+            locationEngine = LocationEngine()
+            locationEngine?.addLocationListener(updateListener!!)
+            locationEngine?.addLocationListener(onLocationUpdated)
+            locationEngine?.addLocationStatusListener(locationStatusListener)
+            locationEngineStatus = locationEngine?.start(LocationAccuracy.NAVIGATION)
+        }
+
         // Ask user to optionally opt in to HERE's data collection / improvement program.
 //        if (consentEngine.userConsentState == Consent.UserReply.NOT_HANDLED) {
 //            consentEngine.requestUserConsent()

@@ -20,6 +20,7 @@ import com.oguzhnatly.flutter_carplay.models.map.FCPMapTemplate
 import com.oguzhnatly.flutter_carplay.models.map.FCPTrip
 import com.oguzhnatly.flutter_carplay.models.map.dismissPanningInterface
 import com.oguzhnatly.flutter_carplay.models.map.here_map.MapCoordinates
+import com.oguzhnatly.flutter_carplay.models.map.here_map.locationEngineResetHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.primaryManeuverActionTextHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.recenterMapViewHandler
 import com.oguzhnatly.flutter_carplay.models.map.here_map.secondaryManeuverActionTextHandler
@@ -823,6 +824,10 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 updateMapCoordinatesHandler?.invoke(mapCoordinates)
 
                 result.success(false)
+            }
+
+            FCPChannelTypes.resetLocationEngine.name -> {
+                locationEngineResetHandler?.invoke()
             }
 
             else -> result.notImplemented()

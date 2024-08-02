@@ -9,6 +9,7 @@ import com.here.sdk.core.Anchor2D
 import com.here.sdk.core.GeoBox
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.GeoCoordinatesUpdate
+import com.here.sdk.core.GeoOrientation
 import com.here.sdk.core.GeoOrientationUpdate
 import com.here.sdk.core.Metadata
 import com.here.sdk.core.Point2D
@@ -151,6 +152,9 @@ class FCPMapViewController : SurfaceCallback {
     /// A debounce object for optimizing camera updates.
     private var cameraUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
 
+    /// A debounce object for optimizing orientation updates.
+    private var orientationUpdateDebounce = Debounce(CoroutineScope(Dispatchers.Main))
+
     /// Default coordinates for the map.
 //    val defaultCoordinates = GeoCoordinates(21.1812352, 72.8629248)
     private val defaultCoordinates = GeoCoordinates(-25.02970994781628, 134.28333173662492)
@@ -272,6 +276,7 @@ class FCPMapViewController : SurfaceCallback {
     override fun onScroll(distanceX: Float, distanceY: Float) {
         isPanningInterfaceVisible = true
         mapView?.gestures?.scrollHandler?.onScroll(distanceX, distanceY)
+        updateCameraOrientation()
     }
 
     /**
@@ -281,6 +286,7 @@ class FCPMapViewController : SurfaceCallback {
     override fun onScale(focusX: Float, focusY: Float, scaleFactor: Float) {
         isPanningInterfaceVisible = true
         mapView?.gestures?.scaleHandler?.onScale(focusX, focusY, scaleFactor)
+        updateCameraOrientation()
     }
 
     /**
@@ -298,8 +304,18 @@ class FCPMapViewController : SurfaceCallback {
          * used.
          */
         mapView?.gestures?.flingHandler?.onFling(-1 * velocityX, -1 * velocityY)
+        updateCameraOrientation()
     }
 
+    /** Updates the camera orientation. */
+    private fun updateCameraOrientation() {
+        orientationUpdateDebounce.debounce(interval = 500L) {
+            if (mapView?.camera?.state?.orientationAtTarget?.tilt == 0.0) return@debounce
+            mapView?.camera?.state?.targetCoordinates?.let {
+                flyToCoordinates(it)
+            }
+        }
+    }
 
     /** Called when the car configuration changes. */
     fun onCarConfigurationChanged() {
@@ -440,7 +456,7 @@ class FCPMapViewController : SurfaceCallback {
 
             if (isNavigationInProgress) {
                 mapController?.navigationHelper?.startRendering()
-            }else {
+            } else {
                 mapController?.navigationHelper?.stopRendering()
                 stopNavigation()
             }
@@ -713,7 +729,7 @@ fun FCPMapViewController.showSubviews() {
  * @param accuracy The accuracy of the marker
  */
 fun FCPMapViewController.renderInitialMarker(coordinates: GeoCoordinates, accuracy: Double) {
-    if(mapView == null) return
+    if (mapView == null) return
 
     if (isNavigationInProgress) {
         mapController?.removeMarker(MapMarkerType.INITIAL)

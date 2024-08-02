@@ -48,7 +48,7 @@ import com.oguzhnatly.flutter_carplay.models.map.FCPMapViewController
  */
 object NavigationHelper {
     /// The VisualNavigator instance.
-    private var visualNavigator: VisualNavigator
+    private val visualNavigator: VisualNavigator
 
     /// The DynamicRoutingEngine instance.
     private lateinit var dynamicRoutingEngine: DynamicRoutingEngine
@@ -59,8 +59,8 @@ object NavigationHelper {
     // A class to receive simulated location events.
     private val herePositioningSimulator: HEREPositioningSimulator = HEREPositioningSimulator()
 
-    // The RoutePrefetcher downloads map data in advance into the map cache.
-    // This is not mandatory, but can help to improve the guidance experience.
+    /// The RoutePrefetcher downloads map data in advance into the map cache.
+    /// This is not mandatory, but can help to improve the guidance experience.
     private val routePrefetcher: RoutePrefetcher =
         RoutePrefetcher(SDKNativeEngine.getSharedInstance()!!)
 
@@ -99,9 +99,7 @@ object NavigationHelper {
 
         // A class to handle various kinds of guidance events.
         navigationEventHandler = NavigationEventHandler()
-        visualNavigator.let {
-            navigationEventHandler.setupListeners(it, dynamicRoutingEngine)
-        }
+        navigationEventHandler.setupListeners(visualNavigator, dynamicRoutingEngine)
 
     }
 
@@ -280,7 +278,6 @@ object NavigationHelper {
         // SpeedBasedCameraBehavior is recommended for tracking mode.
 //        visualNavigator?.cameraBehavior = SpeedBasedCameraBehavior()
 
-        dynamicRoutingEngine.stop()
         routePrefetcher.stopPrefetchAroundRoute()
         visualNavigator.route = null
         enableDevicePositioning()

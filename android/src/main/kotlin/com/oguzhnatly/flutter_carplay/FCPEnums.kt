@@ -192,6 +192,9 @@ enum class FCPChannelTypes {
 
     /// Event for zooming out the map view in Android Auto.
     zoomOutMapView,
+
+    /// Event for resetting the location engine in Android Auto.
+    resetLocationEngine,
 }
 
 /** Enum defining different accessory types. */

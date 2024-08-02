@@ -142,6 +142,13 @@ class FlutterCarplayController {
     );
   }
 
+  /// Reset the location engine on CarPlay.
+  static void resetLocationEngine() {
+    _methodChannel.invokeMethod(
+      FCPChannelTypes.resetLocationEngine.name,
+    );
+  }
+
   /// Starts a navigation.
   static void startNavigation(
     String elementId,

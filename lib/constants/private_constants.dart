@@ -188,4 +188,7 @@ enum FCPChannelTypes {
 
   /// Event for zooming out the map view in CarPlay.
   zoomOutMapView,
+
+  /// Event for resetting the location engine in CarPlay.
+  resetLocationEngine,
 }
