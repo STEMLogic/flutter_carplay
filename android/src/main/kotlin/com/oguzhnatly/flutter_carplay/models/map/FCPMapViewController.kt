@@ -221,10 +221,9 @@ class FCPMapViewController : SurfaceCallback {
      * @param surfaceContainer the surface container that is being destroyed
      */
     override fun onSurfaceDestroyed(surfaceContainer: SurfaceContainer) {
+        mapController?.clearWaypointMapMarkers()
+        mapController?.clearMapPolygons()
         mapSurface.destroySurface()
-//        mapSurface = null
-//        mapController?.detach()
-//        mapController = null
         mapView = null
         (FlutterCarplayPlugin.fcpRootTemplate as? FCPMapTemplate)?.resetCarContext()
         hideSubviews()

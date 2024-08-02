@@ -405,7 +405,7 @@ object MapController {
     }
 
     /** Clear the map markers. */
-    private fun clearWaypointMapMarkers() {
+    fun clearWaypointMapMarkers() {
         for (mapMarker in mapMarkers) {
             mapView?.mapScene?.removeMapMarker(mapMarker)
         }
@@ -413,7 +413,7 @@ object MapController {
     }
 
     /** Clear the map polygons. */
-    private fun clearMapPolygons() {
+    fun clearMapPolygons() {
         for (mapPolygon in mapPolygons) {
             mapView?.mapScene?.removeMapPolygon(mapPolygon)
         }
