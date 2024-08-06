@@ -191,4 +191,7 @@ enum FCPChannelTypes {
 
   /// Event for resetting the location engine in CarPlay.
   resetLocationEngine,
+
+  /// Event for Car UX restriction change from CarPlay.
+  onCarUxRestrictionChanged,
 }

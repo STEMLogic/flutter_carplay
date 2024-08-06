@@ -154,7 +154,8 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setVoiceControl.name -> {
-                if (AndroidAutoService.session?.isStackOverflow != false) {
+                if (AndroidAutoService.session?.isStackOverflow != false || AndroidAutoService.session?.isRestricted != false) {
+                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }
@@ -389,7 +390,8 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setAlert.name -> {
-                if (AndroidAutoService.session?.isStackOverflow != false) {
+                if (AndroidAutoService.session?.isStackOverflow != false || AndroidAutoService.session?.isRestricted != false) {
+                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }
@@ -421,7 +423,8 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setActionSheet.name -> {
-                if (AndroidAutoService.session?.isStackOverflow != false) {
+                if (AndroidAutoService.session?.isStackOverflow != false || AndroidAutoService.session?.isRestricted != false) {
+                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }

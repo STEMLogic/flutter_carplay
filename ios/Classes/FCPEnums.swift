@@ -210,6 +210,9 @@ enum FCPChannelTypes {
 
     /// Event for resetting the location engine in CarPlay.
     static let resetLocationEngine = "resetLocationEngine",
+
+    /// Event for Car UX restriction change from CarPlay.
+    static let onCarUxRestrictionChanged = "onCarUxRestrictionChanged",
 }
 
 /// Enum defining different types of alert actions in CarPlay.

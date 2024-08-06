@@ -70,6 +70,9 @@ class FlutterCarplay {
   /// navigation is completed from CarPlay.
   static Function()? _onNavigationCompletedFromCarplay;
 
+  /// A listener function that will be triggered when the car UX restriction changes.
+  static Function({bool isRestricted})? _onCarUxRestrictionChanged;
+
   /// Creates an [FlutterCarplay] and starts the connection.
   FlutterCarplay() {
     _eventBroadcast = _carPlayController.eventChannel
@@ -170,6 +173,8 @@ class FlutterCarplay {
           _onNavigationFailedFromCarplay?.call(event['data']['message']);
         case FCPChannelTypes.onNavigationCompletedFromCarplay:
           _onNavigationCompletedFromCarplay?.call();
+        case FCPChannelTypes.onCarUxRestrictionChanged:
+          _onCarUxRestrictionChanged?.call(isRestricted: event['data']['isRestricted']);
         default:
           break;
       }
@@ -475,7 +480,21 @@ class FlutterCarplay {
     _onNavigationCompletedFromCarplay = null;
   }
 
-  /// Adds the specified [CPSpeaker] utterance to the queue of the speech synthesizer in CarPlay.
+  /// Callback function will be fired when CarPlay UX restriction changes.
+  static void addListenerOnCarUxRestrictionChanged({
+    Function({bool isRestricted})? onCarUxRestrictionChanged,
+  }) {
+    _onCarUxRestrictionChanged = onCarUxRestrictionChanged;
+  }
+
+  /// Removes the callback function that has been set before in order to listen
+  /// on CarPlay UX restriction changes.
+  static void removeListenerOnCarUxRestrictionChanged() {
+    _onCarUxRestrictionChanged = null;
+  }
+
+  /// Adds the specified [CPSpeaker] utterance to the queue of the speech
+  /// synthesizer in CarPlay.
   static void speak(CPSpeaker speakerController) {
     if (speakerController.onCompleted != null) {
       FlutterCarplayController.callbackObjects.add(speakerController);

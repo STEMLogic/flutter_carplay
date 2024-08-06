@@ -2,10 +2,14 @@ package com.oguzhnatly.flutter_carplay
 
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.car.app.AppManager
+import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
 import androidx.car.app.Session
+import androidx.car.app.hardware.CarHardwareManager
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
@@ -16,6 +20,8 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import java.util.concurrent.Executors
+import kotlin.time.Duration
 
 
 /**
@@ -35,8 +41,12 @@ class AndroidAutoSession : Session() {
     /// A flag indicating whether the Flutter engine needs to be started.
     var isStartRequired = false
 
+    /// A flag indicating whether the session is restricted by driving mode.
+    var isRestricted = false
+
     /// The screen manager used to manage the screens in the Android Auto session.
     val screenManager = carContext.getCarService(ScreenManager::class.java)
+    val appManager = carContext.getCarService(AppManager::class.java)
 
     /// A debounce object for optimizing screen push.
     private val bouncer = Debounce(CoroutineScope(Dispatchers.Main))
@@ -57,6 +67,7 @@ class AndroidAutoSession : Session() {
      * @param intent The [Intent] used to create the screen.
      * @return A [Screen] representing the created screen.
      */
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreateScreen(intent: Intent): Screen {
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
@@ -122,7 +133,29 @@ class AndroidAutoSession : Session() {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
 
+        carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { grantedPermissions, rejectedPermissions ->
+
+            val hardwareManager = carContext.getCarService(CarHardwareManager::class.java)
+            hardwareManager.carInfo.addSpeedListener(Executors.newSingleThreadExecutor()) {
+                val isRestrictedNew = (it.displaySpeedMetersPerSecond.value ?: 0f) > 0f
+                if (isRestricted == isRestrictedNew) return@addSpeedListener
+                isRestricted = isRestrictedNew
+                FCPStreamHandlerPlugin.sendEvent(
+                    type = FCPChannelTypes.onCarUxRestrictionChanged.name,
+                    data = mapOf("isRestricted" to isRestricted)
+                )
+                Logger.log("Car Speed: ${it.displaySpeedMetersPerSecond} ")
+            }
+        }
+
         return (FlutterCarplayPlugin.fcpRootTemplate ?: RootTemplate()).toScreen(carContext)
+    }
+
+    fun showRestrictedToast(
+        text: String = "Feature not available while driving",
+        duration: Int = CarToast.LENGTH_LONG
+    ) {
+        appManager.showToast(text, duration)
     }
 
     /** Called when the car configuration changes. */
@@ -179,6 +212,10 @@ class AndroidAutoSession : Session() {
                 "Android Auto cannot have more than 5 templates on navigation hierarchy.",
                 null
             )
+            return
+        } else if (isRestricted) {
+            showRestrictedToast()
+            result?.success(false)
             return
         }
 
