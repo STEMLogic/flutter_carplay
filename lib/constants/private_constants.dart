@@ -177,7 +177,7 @@ enum FCPChannelTypes {
   /// Event for starting the navigation from CarPlay.
   onNavigationStartedFromCarplay,
 
-  /// Event for failed the navigation from CarPlay.
+  /// Event for failed navigation from CarPlay.
   onNavigationFailedFromCarplay,
 
   /// Event for completed navigation from CarPlay.
@@ -191,4 +191,7 @@ enum FCPChannelTypes {
 
   /// Event for resetting the location engine in CarPlay.
   resetLocationEngine,
+
+  /// Event for location updated from CarPlay.
+  onLocationUpdatedFromCarplay,
 }

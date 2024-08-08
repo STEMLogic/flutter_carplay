@@ -195,6 +195,9 @@ enum class FCPChannelTypes {
 
     /// Event for resetting the location engine in Android Auto.
     resetLocationEngine,
+
+    /// Event for updated location from Android Auto.
+    onLocationUpdatedFromCarplay,
 }
 
 /** Enum defining different accessory types. */
