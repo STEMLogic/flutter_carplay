@@ -13,6 +13,9 @@ class CPListTemplate {
   /// It will be displayed when only the list template is visible.
   final String? title;
 
+  /// When the app is in a restricted state, the message to display on the action sheet.
+  final String? restrictedStateMessage;
+
   /// An array of list sections as [CPListSection], each can contain zero or more list items.
   List<CPListSection> sections;
 
@@ -80,6 +83,7 @@ class CPListTemplate {
     this.emptyViewSubtitleVariants = const [],
     this.leadingNavigationBarButtons = const [],
     this.trailingNavigationBarButtons = const [],
+    this.restrictedStateMessage,
   });
 
   Map<String, dynamic> toJson() => {
@@ -95,6 +99,7 @@ class CPListTemplate {
         'showsTabBadge': showsTabBadge,
         'systemIcon': systemIcon,
         'backButton': backButton?.toJson(),
+        'restrictedStateMessage': restrictedStateMessage
       };
 
   /// Update the properties of the [CPListTemplate]
