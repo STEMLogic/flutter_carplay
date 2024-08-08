@@ -118,7 +118,6 @@ class FCPSpeechRecognizer {
 
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    println("onResults----${matches.toString()}")
                     if (!matches.isNullOrEmpty()) {
                         relay(matches[0])
                     }
@@ -128,7 +127,6 @@ class FCPSpeechRecognizer {
                 override fun onPartialResults(partialResults: Bundle?) {
                     val matches =
                         partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    println("onPartialResults----${matches.toString()}")
                     if (!matches.isNullOrEmpty()) {
                         relay(matches[0])
                     }

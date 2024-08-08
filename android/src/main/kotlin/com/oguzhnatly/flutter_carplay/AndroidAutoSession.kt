@@ -131,8 +131,6 @@ class AndroidAutoSession : Session() {
 
         FCPSpeaker.initializeTTS()
 
-        carContext.getCarService(CarContext.SUGGESTION_SERVICE)
-
         FlutterCarplayPlugin.rootViewController?.let {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
