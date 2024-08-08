@@ -313,11 +313,16 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     return
                 }
 
-                if(AndroidAutoService.session?.isRestricted == true) {
+                if (AndroidAutoService.session?.isRestricted == true) {
                     val templateArgs = args["template"] as? Map<String, Any>?
                     val restrictedStateMessage =
                         templateArgs?.get("restrictedStateMessage") as? String
-                            ?: return result.success(false)
+
+                    if (restrictedStateMessage == null) {
+                        AndroidAutoService.session?.showRestrictedToast()
+                        return result.success(false)
+                    }
+
                     AndroidAutoService.session?.presentTemplate(
                         template = FCPRestrictedMessageTemplate(restrictedStateMessage),
                     )
@@ -436,7 +441,6 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
             FCPChannelTypes.setActionSheet.name -> {
                 if (AndroidAutoService.session?.isStackOverflow != false) {
-                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }
@@ -456,10 +460,15 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
                 }
 
-                if(AndroidAutoService.session?.isRestricted == true) {
+                if (AndroidAutoService.session?.isRestricted == true) {
                     val restrictedStateMessage =
                         rootTemplateArgs["restrictedStateMessage"] as? String
-                            ?: return result.success(false)
+
+                    if (restrictedStateMessage == null) {
+                        AndroidAutoService.session?.showRestrictedToast()
+                        return result.success(false)
+                    }
+
                     AndroidAutoService.session?.presentTemplate(
                         template = FCPRestrictedMessageTemplate(restrictedStateMessage),
                     )
