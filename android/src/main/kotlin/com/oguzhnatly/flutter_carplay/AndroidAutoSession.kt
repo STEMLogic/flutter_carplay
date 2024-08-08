@@ -70,7 +70,6 @@ class AndroidAutoSession : Session() {
      * @param intent The [Intent] used to create the screen.
      * @return A [Screen] representing the created screen.
      */
-    @RequiresApi(Build.VERSION_CODES.P)
     override fun onCreateScreen(intent: Intent): Screen {
         lifecycle.addObserver(
             object : DefaultLifecycleObserver {
@@ -138,8 +137,7 @@ class AndroidAutoSession : Session() {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
 
-        carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { grantedPermissions, rejectedPermissions ->
-
+        carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { _, _ ->
             val hardwareManager = carContext.getCarService(CarHardwareManager::class.java)
             hardwareManager.carInfo.addSpeedListener(Executors.newSingleThreadExecutor()) {
                 val isRestrictedNew = (it.displaySpeedMetersPerSecond.value ?: 0f) > 0f
