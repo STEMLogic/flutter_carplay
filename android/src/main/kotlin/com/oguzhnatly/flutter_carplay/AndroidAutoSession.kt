@@ -4,7 +4,9 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.annotation.UiThread
 import androidx.car.app.AppManager
+import androidx.car.app.CarContext
 import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
@@ -20,6 +22,7 @@ import io.flutter.embedding.engine.dart.DartExecutor
 import io.flutter.plugin.common.MethodChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import kotlin.time.Duration
 
@@ -129,6 +132,8 @@ class AndroidAutoSession : Session() {
 
         FCPSpeaker.initializeTTS()
 
+        carContext.getCarService(CarContext.SUGGESTION_SERVICE)
+
         FlutterCarplayPlugin.rootViewController?.let {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
@@ -140,11 +145,13 @@ class AndroidAutoSession : Session() {
                 val isRestrictedNew = (it.displaySpeedMetersPerSecond.value ?: 0f) > 0f
                 if (isRestricted == isRestrictedNew) return@addSpeedListener
                 isRestricted = isRestrictedNew
-                FCPStreamHandlerPlugin.sendEvent(
-                    type = FCPChannelTypes.onCarUxRestrictionChanged.name,
-                    data = mapOf("isRestricted" to isRestricted)
-                )
-                Logger.log("Car Speed: ${it.displaySpeedMetersPerSecond} ")
+                CoroutineScope(Dispatchers.Main).launch {
+                    FCPStreamHandlerPlugin.sendEvent(
+                        type = FCPChannelTypes.onCarUxRestrictionChanged.name,
+                        data = mapOf("isRestricted" to isRestricted)
+                    )
+                }
+                Logger.log("CarSpeedTest : ${it.displaySpeedMetersPerSecond} ")
             }
         }
 

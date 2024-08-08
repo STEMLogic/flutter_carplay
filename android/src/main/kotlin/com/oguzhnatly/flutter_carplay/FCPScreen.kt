@@ -3,6 +3,7 @@ package com.oguzhnatly.flutter_carplay
 import androidx.activity.OnBackPressedCallback
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
+import com.oguzhnatly.flutter_carplay.models.action_sheet.FCPRestrictedMessageTemplate
 import com.oguzhnatly.flutter_carplay.models.information.FCPInformationTemplate
 import com.oguzhnatly.flutter_carplay.models.voice_control.FCPVoiceControlTemplate
 
@@ -29,11 +30,15 @@ class FCPScreen(carContext: CarContext, val fcpTemplate: FCPTemplate) : Screen(c
                 }
 
                 is FCPVoiceControlTemplate -> {
-                    AndroidAutoService.session?.pop()
+                    AndroidAutoService.session?.closePresent()
                     FCPStreamHandlerPlugin.sendEvent(
                         type = FCPChannelTypes.onVoiceControlTemplatePopped.name,
                         data = mapOf("elementId" to fcpTemplate.elementId)
                     )
+                }
+
+                is FCPRestrictedMessageTemplate -> {
+                    AndroidAutoService.session?.closePresent()
                 }
 
                 else -> {
