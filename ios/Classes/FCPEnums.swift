@@ -209,6 +209,10 @@ enum FCPChannelTypes {
     static let zoomOutMapView = "zoomOutMapView"
 
     /// Event for resetting the location engine in CarPlay.
+    static let resetLocationEngine = "resetLocationEngine",
+
+    /// Event for Car UX restriction change from CarPlay.
+    static let onCarUxRestrictionChanged = "onCarUxRestrictionChanged"
     static let resetLocationEngine = "resetLocationEngine"
 
     /// Event for updated location from CarPlay.

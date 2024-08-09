@@ -6,6 +6,7 @@ import com.here.sdk.core.GeoCoordinates
 import com.oguzhnatly.flutter_carplay.managers.audio.FCPSoundEffects
 import com.oguzhnatly.flutter_carplay.managers.audio.FCPSpeaker
 import com.oguzhnatly.flutter_carplay.models.action_sheet.FCPActionSheetTemplate
+import com.oguzhnatly.flutter_carplay.models.action_sheet.FCPRestrictedMessageTemplate
 import com.oguzhnatly.flutter_carplay.models.alert.FCPAlertTemplate
 import com.oguzhnatly.flutter_carplay.models.button.FCPBarButton
 import com.oguzhnatly.flutter_carplay.models.button.FCPTextButton
@@ -154,7 +155,8 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setVoiceControl.name -> {
-                if (AndroidAutoService.session?.isStackOverflow != false) {
+                if (AndroidAutoService.session?.isStackOverflow != false || AndroidAutoService.session?.isRestricted != false) {
+                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }
@@ -310,6 +312,22 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     result.success(false)
                     return
                 }
+
+                if (AndroidAutoService.session?.isRestricted == true) {
+                    val templateArgs = args["template"] as? Map<String, Any>?
+                    val restrictedStateMessage =
+                        templateArgs?.get("restrictedStateMessage") as? String
+
+                    if (restrictedStateMessage == null) {
+                        AndroidAutoService.session?.showRestrictedToast()
+                        return result.success(false)
+                    }
+
+                    AndroidAutoService.session?.presentTemplate(
+                        template = FCPRestrictedMessageTemplate(restrictedStateMessage),
+                    )
+                    return result.success(false)
+                }
                 pushTemplate(args = args, result = result)
             }
 
@@ -389,7 +407,8 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
             }
 
             FCPChannelTypes.setAlert.name -> {
-                if (AndroidAutoService.session?.isStackOverflow != false) {
+                if (AndroidAutoService.session?.isStackOverflow != false || AndroidAutoService.session?.isRestricted != false) {
+                    AndroidAutoService.session?.showRestrictedToast()
                     result.success(false)
                     return
                 }
@@ -439,6 +458,21 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     )
                     fcpPresentTemplate = actionSheetTemplate
 
+                }
+
+                if (AndroidAutoService.session?.isRestricted == true) {
+                    val restrictedStateMessage =
+                        rootTemplateArgs["restrictedStateMessage"] as? String
+
+                    if (restrictedStateMessage == null) {
+                        AndroidAutoService.session?.showRestrictedToast()
+                        return result.success(false)
+                    }
+
+                    AndroidAutoService.session?.presentTemplate(
+                        template = FCPRestrictedMessageTemplate(restrictedStateMessage),
+                    )
+                    return result.success(false)
                 }
 
                 if (fcpPresentTemplate != null) {

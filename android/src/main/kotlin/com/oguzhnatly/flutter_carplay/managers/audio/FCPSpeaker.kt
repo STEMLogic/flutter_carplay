@@ -7,6 +7,7 @@ import android.os.Looper
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
+import com.oguzhnatly.flutter_carplay.Logger
 import java.util.Locale
 
 /** A singleton class responsible for handling text-to-speech functionality in the Flutter CarPlay plugin. */
@@ -94,7 +95,7 @@ object FCPSpeaker : TextToSpeech.OnInitListener {
             tts?.language = locale
             true
         } else {
-            println("Google's TextToSpeech does not support this language: $locale. Keeping ${this.locale}.")
+            Logger.log("Google's TextToSpeech does not support this language: $locale. Keeping ${this.locale}.")
             false
         }
     }

@@ -14,6 +14,9 @@ class CPActionSheetTemplate extends CPPresentTemplate {
   /// The descriptive message providing details about the reason for displaying the action sheet.
   final String? message;
 
+  /// When the app is in a restricted state, the message to display on the action sheet.
+  final String? restrictedStateMessage;
+
   /// Whether the action sheet should be displayed as a long message.
   ///
   /// Available only on Android Auto.
@@ -30,6 +33,7 @@ class CPActionSheetTemplate extends CPPresentTemplate {
     this.title,
     this.message,
     this.isLongMessage,
+    this.restrictedStateMessage,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +42,7 @@ class CPActionSheetTemplate extends CPPresentTemplate {
         'message': message,
         'actions': actions.map((e) => e.toJson()).toList(),
         'isLongMessage': isLongMessage,
+        'restrictedStateMessage': restrictedStateMessage
       };
 
   String get uniqueId {
