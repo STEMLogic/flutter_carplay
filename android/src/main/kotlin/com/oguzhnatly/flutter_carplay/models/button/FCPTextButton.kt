@@ -8,6 +8,9 @@ import com.oguzhnatly.flutter_carplay.CPTextButton
 import com.oguzhnatly.flutter_carplay.CPTextButtonStyle
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
+import com.oguzhnatly.flutter_carplay.Throttle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 /**
  * A wrapper class for CPTextButton with additional functionality.
@@ -34,6 +37,9 @@ class FCPTextButton(obj: Map<String, Any>) {
     /// The style of the text button.
     private var style: CPTextButtonStyle
 
+    /// The throttle object that ensures that the map button is only executed once per interval.
+    private val throttle = Throttle(CoroutineScope(Dispatchers.Main))
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         val titleValue = obj["title"] as? String
@@ -57,10 +63,12 @@ class FCPTextButton(obj: Map<String, Any>) {
     /** Returns the underlying CPTextButton instance configured with the specified properties. */
     fun getTemplate(): CPTextButton {
         val onClick = {
-            FCPStreamHandlerPlugin.sendEvent(
-                type = FCPChannelTypes.onTextButtonPressed.name,
-                data = mapOf("elementId" to elementId)
-            )
+            throttle.throttle(1000) {
+                FCPStreamHandlerPlugin.sendEvent(
+                    type = FCPChannelTypes.onTextButtonPressed.name,
+                    data = mapOf("elementId" to elementId)
+                )
+            }
         }
         val textButton = Action.Builder().setTitle(title)
             .setOnClickListener(ParkedOnlyOnClickListener.create(onClick))

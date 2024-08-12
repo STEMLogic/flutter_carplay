@@ -6,8 +6,11 @@ import com.oguzhnatly.flutter_carplay.CPBarButton
 import com.oguzhnatly.flutter_carplay.CPBarButtonStyle
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
 import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
+import com.oguzhnatly.flutter_carplay.Throttle
 import com.oguzhnatly.flutter_carplay.UIImage
 import com.oguzhnatly.flutter_carplay.UIImageObject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 
 /**
  * A wrapper class for CPBarButton with additional functionality.
@@ -40,6 +43,9 @@ class FCPBarButton(obj: Map<String, Any>) {
     /// A Boolean value indicating whether the map button is shown in the map action strip.
     var showInMapActionStrip: Bool
 
+    /// The throttle object that ensures that the map button is only executed once per interval.
+    private val throttle = Throttle(CoroutineScope(Dispatchers.Main))
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         assert(elementIdValue != null) { "Missing required keys in dictionary for FCPBarButton initialization." }
@@ -61,10 +67,12 @@ class FCPBarButton(obj: Map<String, Any>) {
         if (!isForPanning) {
             action.setOnClickListener {
                 // Dispatch an event when the bar button is pressed.
-                FCPStreamHandlerPlugin.sendEvent(
-                    type = FCPChannelTypes.onBarButtonPressed.name,
-                    data = mapOf("elementId" to elementId)
-                )
+                throttle.throttle(1000) {
+                    FCPStreamHandlerPlugin.sendEvent(
+                        type = FCPChannelTypes.onBarButtonPressed.name,
+                        data = mapOf("elementId" to elementId)
+                    )
+                }
             }
         }
 
