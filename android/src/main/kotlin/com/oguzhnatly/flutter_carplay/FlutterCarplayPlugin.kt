@@ -323,9 +323,15 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                         return result.success(false)
                     }
 
-                    AndroidAutoService.session?.presentTemplate(
-                        template = FCPRestrictedMessageTemplate(restrictedStateMessage),
-                    )
+                    if(fcpPresentTemplate is FCPRestrictedMessageTemplate) {
+                        AndroidAutoService.session?.closePresent()
+                    }
+
+                    val template = FCPRestrictedMessageTemplate(restrictedStateMessage)
+                    AndroidAutoService.session?.presentTemplate(template = template)
+
+                    fcpPresentTemplate = template
+
                     return result.success(false)
                 }
                 pushTemplate(args = args, result = result)
@@ -451,28 +457,38 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     return
                 }
 
-                val showActionSheet = {
+                val showActionSheet = showActionSheet@{
+
+                    if (AndroidAutoService.session?.isRestricted == true) {
+
+                        val restrictedStateMessage =
+                            rootTemplateArgs["restrictedStateMessage"] as? String
+
+                        if (restrictedStateMessage == null) {
+                            AndroidAutoService.session?.showRestrictedToast()
+                            return@showActionSheet result.success(false)
+                        }
+
+                        if(fcpPresentTemplate is FCPRestrictedMessageTemplate) {
+                            AndroidAutoService.session?.closePresent()
+                        }
+
+                        val actionSheetTemplate = FCPRestrictedMessageTemplate(restrictedStateMessage)
+                        AndroidAutoService.session?.presentTemplate(
+                            template = actionSheetTemplate,
+                        )
+
+                        fcpPresentTemplate = actionSheetTemplate
+
+                        return@showActionSheet result.success(false)
+                    }
+
                     val actionSheetTemplate = FCPActionSheetTemplate(rootTemplateArgs)
                     AndroidAutoService.session?.presentTemplate(
                         template = actionSheetTemplate, result = result
                     )
                     fcpPresentTemplate = actionSheetTemplate
 
-                }
-
-                if (AndroidAutoService.session?.isRestricted == true) {
-                    val restrictedStateMessage =
-                        rootTemplateArgs["restrictedStateMessage"] as? String
-
-                    if (restrictedStateMessage == null) {
-                        AndroidAutoService.session?.showRestrictedToast()
-                        return result.success(false)
-                    }
-
-                    AndroidAutoService.session?.presentTemplate(
-                        template = FCPRestrictedMessageTemplate(restrictedStateMessage),
-                    )
-                    return result.success(false)
                 }
 
                 if (fcpPresentTemplate != null) {

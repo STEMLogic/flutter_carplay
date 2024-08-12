@@ -177,7 +177,7 @@ enum FCPChannelTypes {
   /// Event for starting the navigation from CarPlay.
   onNavigationStartedFromCarplay,
 
-  /// Event for failed the navigation from CarPlay.
+  /// Event for failed navigation from CarPlay.
   onNavigationFailedFromCarplay,
 
   /// Event for completed navigation from CarPlay.
@@ -194,4 +194,7 @@ enum FCPChannelTypes {
 
   /// Event for Car UX restriction change from CarPlay.
   onCarUxRestrictionChanged,
+
+  /// Event for location updated from CarPlay.
+  onLocationUpdatedFromCarplay,
 }

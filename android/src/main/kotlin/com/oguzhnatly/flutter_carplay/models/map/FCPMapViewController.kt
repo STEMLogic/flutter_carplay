@@ -28,6 +28,8 @@ import com.here.time.Duration
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.Debounce
+import com.oguzhnatly.flutter_carplay.FCPChannelTypes
+import com.oguzhnatly.flutter_carplay.FCPStreamHandlerPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
 import com.oguzhnatly.flutter_carplay.FlutterCarplayTemplateManager
 import com.oguzhnatly.flutter_carplay.Logger
@@ -437,6 +439,11 @@ class FCPMapViewController : SurfaceCallback {
             updateMapCoordinatesHandler?.invoke(mapCoordinates)
 
             recenterMapViewHandler?.invoke(recenterMapPosition)
+
+            FCPStreamHandlerPlugin.sendEvent(
+                type = FCPChannelTypes.onLocationUpdatedFromCarplay.name,
+                data = mapOf(),
+            )
         }
 
         if (!mapLoadedOnce) {

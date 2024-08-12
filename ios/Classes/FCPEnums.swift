@@ -213,6 +213,9 @@ enum FCPChannelTypes {
 
     /// Event for Car UX restriction change from CarPlay.
     static let onCarUxRestrictionChanged = "onCarUxRestrictionChanged"
+
+    /// Event for updated location from CarPlay.
+    static let onLocationUpdatedFromCarplay = "onLocationUpdatedFromCarplay"
 }
 
 /// Enum defining different types of alert actions in CarPlay.
