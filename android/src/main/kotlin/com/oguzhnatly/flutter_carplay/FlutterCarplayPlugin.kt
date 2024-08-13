@@ -507,14 +507,17 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                     return
                 }
 
+                val constraintManager = carContext.getCarService(ConstraintManager::class.java)
                 val listItemLimit =
-                    carContext.getCarService(ConstraintManager::class.java).getContentLimit(
-                        ConstraintManager.CONTENT_LIMIT_TYPE_LIST
-                    )
+                    constraintManager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
+
+                val paneItemLimit =
+                    constraintManager.getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_PANE)
 
                 val config = mapOf(
                     "maximumItemCount" to listItemLimit,
                     "maximumSectionCount" to listItemLimit,
+                    "maximumPaneItemCount" to paneItemLimit
                 )
                 result.success(config)
             }
