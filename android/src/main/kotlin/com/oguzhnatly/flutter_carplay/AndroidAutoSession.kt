@@ -34,6 +34,7 @@ import java.util.concurrent.Executors
  * session.
  */
 class AndroidAutoSession : Session() {
+    /// The Flutter engine used to run the Flutter app.
     private var flutterEngine: FlutterEngine? = null
 
     /// A flag indicating whether the Flutter engine needs to be started.
@@ -44,11 +45,14 @@ class AndroidAutoSession : Session() {
 
     /// The screen manager used to manage the screens in the Android Auto session.
     val screenManager = carContext.getCarService(ScreenManager::class.java)
-    val appManager = carContext.getCarService(AppManager::class.java)
+
+    /// The app manager used to manage the apps in the Android Auto session.
+    private val appManager = carContext.getCarService(AppManager::class.java)
 
     /// A debounce object for optimizing screen push.
     private val bouncer = Debounce(CoroutineScope(Dispatchers.Main))
 
+    /// A flag indicating whether the screen stack is overflowing.
     val isStackOverflow get() = screenManager.screenStack.size >= 5
 
     /**
@@ -149,9 +153,10 @@ class AndroidAutoSession : Session() {
         return (FlutterCarplayPlugin.fcpRootTemplate ?: RootTemplate()).toScreen(carContext)
     }
 
+    /** Displays a toast with the given text and duration. */
     fun showRestrictedToast(
         text: String = "Feature not available while driving",
-        duration: Int = CarToast.LENGTH_LONG,
+        duration: Int = CarToast.LENGTH_SHORT,
     ) {
         appManager.showToast(text, duration)
     }

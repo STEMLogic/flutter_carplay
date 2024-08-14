@@ -4,6 +4,7 @@ import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.LongMessageTemplate
 import androidx.car.app.model.MessageTemplate
+import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPAlertAction
 import com.oguzhnatly.flutter_carplay.CPAlertActionStyle
@@ -35,6 +36,10 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
     /// Indicates whether the action sheet template is a long message.
     private var isLongMessage: Bool = false
 
+    /// Indicates whether the action sheet template is restricted.
+    private val isNotRestricted
+        get() = AndroidAutoService.session?.isRestricted != true
+
     init {
         val elementIdValue = obj["_elementId"] as? String
         assert(elementIdValue != null) { "Missing required key: _elementId" }
@@ -56,7 +61,7 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     /** Returns the underlying CPTemplate instance configured with the specified properties. */
     override fun getTemplate(): CPTemplate {
-        return if (isLongMessage)
+        return if (isLongMessage && isNotRestricted)
             longMessageTemplate()
         else
             messageTemplate()
@@ -92,7 +97,9 @@ class FCPActionSheetTemplate(obj: Map<String, Any>) : FCPPresentTemplate() {
 
     private fun messageTemplate(): CPTemplate {
         val actionSheetTemplate =
-            MessageTemplate.Builder(message ?: " ").setTitle(title ?: " ").setIcon(CarIcon.ALERT)
+            MessageTemplate.Builder(message ?: " ").setTitle(title ?: " ")
+
+        if (!isLongMessage) actionSheetTemplate.setIcon(CarIcon.ALERT)
 
         objcActions.forEach {
             when {

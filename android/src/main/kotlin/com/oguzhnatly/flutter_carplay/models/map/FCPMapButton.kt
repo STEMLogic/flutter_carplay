@@ -67,7 +67,7 @@ class FCPMapButton(obj: Map<String, Any>) {
     fun getTemplate(): CPMapButton {
         val action = Action.Builder().setEnabled(isEnabled).setIcon(image!!).setOnClickListener {
             // Dispatch an event when the bar button is pressed.
-            throttle.throttle(1000) {
+            throttle.throttle(500L) {
                 FCPStreamHandlerPlugin.sendEvent(
                     type = FCPChannelTypes.onMapButtonPressed.name,
                     data = mapOf("elementId" to elementId)

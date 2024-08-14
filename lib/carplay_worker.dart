@@ -181,7 +181,8 @@ class FlutterCarplay {
           _onLocationUpdatedFromCarplay?.call();
         case FCPChannelTypes.onCarUxRestrictionChanged:
           _onCarUxRestrictionChanged?.call(
-              isRestricted: event['data']['isRestricted']);
+            isRestricted: event['data']['isRestricted'],
+          );
         default:
           break;
       }
@@ -503,7 +504,7 @@ class FlutterCarplay {
   /// Adds the specified [CPSpeaker] utterance to the queue of the speech
   /// synthesizer in CarPlay.
   /// Callback function will be fired when location updated from CarPlay.
-  static void addOnLocationUpdatedFromCarplay({
+  static void addListenerOnLocationUpdatedFromCarplay({
     Function()? onLocationUpdatedFromCarplay,
   }) {
     _onLocationUpdatedFromCarplay = onLocationUpdatedFromCarplay;
@@ -511,7 +512,7 @@ class FlutterCarplay {
 
   /// Removes the callback function that has been set before in order to listen
   /// location updated from CarPlay.
-  static void removeOnLocationUpdatedFromCarplay() {
+  static void removeListenerOnLocationUpdatedFromCarplay() {
     _onLocationUpdatedFromCarplay = null;
   }
 
