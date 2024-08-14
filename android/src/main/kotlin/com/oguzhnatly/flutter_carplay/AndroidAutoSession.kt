@@ -2,11 +2,7 @@ package com.oguzhnatly.flutter_carplay
 
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
-import androidx.annotation.RequiresApi
-import androidx.annotation.UiThread
 import androidx.car.app.AppManager
-import androidx.car.app.CarContext
 import androidx.car.app.CarToast
 import androidx.car.app.Screen
 import androidx.car.app.ScreenManager
@@ -24,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
-import kotlin.time.Duration
 
 
 /**
@@ -156,7 +151,7 @@ class AndroidAutoSession : Session() {
 
     fun showRestrictedToast(
         text: String = "Feature not available while driving",
-        duration: Int = CarToast.LENGTH_LONG
+        duration: Int = CarToast.LENGTH_LONG,
     ) {
         appManager.showToast(text, duration)
     }

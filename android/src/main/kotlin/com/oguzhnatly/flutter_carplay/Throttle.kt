@@ -35,7 +35,7 @@ class Throttle(private val scope: CoroutineScope) {
      * @param action The action to execute.
      */
     fun throttle(interval: Long, action: () -> Unit) {
-        if(job?.isCompleted == false) return // Cancel the previous job if it hasn't completed yet.
+        if (job?.isCompleted == false) return // Cancel the previous job if it hasn't completed yet.
         job = scope.launch {
             // launch a coroutine in the provided scope.
             action() // Execute the provided action.

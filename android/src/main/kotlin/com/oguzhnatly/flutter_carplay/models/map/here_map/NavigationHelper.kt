@@ -25,7 +25,6 @@ import com.here.sdk.core.Location
 import com.here.sdk.core.engine.SDKNativeEngine
 import com.here.sdk.core.errors.InstantiationErrorException
 import com.here.sdk.location.LocationAccuracy
-import com.here.sdk.mapview.MapSurface
 import com.here.sdk.navigation.DynamicCameraBehavior
 import com.here.sdk.navigation.VisualNavigator
 import com.here.sdk.prefetcher.RoutePrefetcher
@@ -349,6 +348,6 @@ object NavigationHelper {
         visualNavigator.stopRendering()
     }
 
-        private val TAG: String = NavigationHelper::class.java.name
+    private val TAG: String = NavigationHelper::class.java.name
 
 }

@@ -150,7 +150,7 @@ class FCPTripPreview {
         frameLayout.measure(specWidth, specHeight)
         frameLayout.layout(0, 0, frameLayout.measuredWidth, frameLayout.measuredHeight)
 
-        if(linearLayout.measuredWidth <= 0 || linearLayout.measuredHeight <= 0) return
+        if (linearLayout.measuredWidth <= 0 || linearLayout.measuredHeight <= 0) return
         val bitmap = Bitmap.createBitmap(
             frameLayout.measuredWidth,
             frameLayout.measuredHeight,

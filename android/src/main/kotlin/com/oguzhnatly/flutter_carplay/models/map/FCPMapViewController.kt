@@ -1,15 +1,12 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
 import android.graphics.Rect
-import android.os.Handler
-import android.os.Looper
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.SurfaceContainer
 import com.here.sdk.core.Anchor2D
 import com.here.sdk.core.GeoBox
 import com.here.sdk.core.GeoCoordinates
 import com.here.sdk.core.GeoCoordinatesUpdate
-import com.here.sdk.core.GeoOrientation
 import com.here.sdk.core.GeoOrientationUpdate
 import com.here.sdk.core.Metadata
 import com.here.sdk.core.Point2D
@@ -21,8 +18,6 @@ import com.here.sdk.mapview.MapFeatures
 import com.here.sdk.mapview.MapMeasure
 import com.here.sdk.mapview.MapScheme
 import com.here.sdk.mapview.MapSurface
-import com.here.sdk.mapview.MapViewBase
-import com.here.sdk.mapview.MapViewLifecycleListener
 import com.here.sdk.routing.Waypoint
 import com.here.time.Duration
 import com.oguzhnatly.flutter_carplay.AndroidAutoService

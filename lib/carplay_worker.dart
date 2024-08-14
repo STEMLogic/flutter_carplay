@@ -180,7 +180,8 @@ class FlutterCarplay {
         case FCPChannelTypes.onLocationUpdatedFromCarplay:
           _onLocationUpdatedFromCarplay?.call();
         case FCPChannelTypes.onCarUxRestrictionChanged:
-          _onCarUxRestrictionChanged?.call(isRestricted: event['data']['isRestricted']);
+          _onCarUxRestrictionChanged?.call(
+              isRestricted: event['data']['isRestricted']);
         default:
           break;
       }

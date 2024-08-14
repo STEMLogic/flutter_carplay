@@ -117,7 +117,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
      */
     override fun onMethodCall(call: MethodCall, result: Result) {
         if (call.method != FCPChannelTypes.showOverlay.name) {
-            Logger.log("FlutterMethodCall received : ${call.method}")
+            Logger.log("FlutterMethodCall received: ${call.method}")
         }
 
         when (call.method) {
@@ -323,7 +323,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                         return result.success(false)
                     }
 
-                    if(fcpPresentTemplate is FCPRestrictedMessageTemplate) {
+                    if (fcpPresentTemplate is FCPRestrictedMessageTemplate) {
                         AndroidAutoService.session?.closePresent()
                     }
 
@@ -469,11 +469,12 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                             return@showActionSheet result.success(false)
                         }
 
-                        if(fcpPresentTemplate is FCPRestrictedMessageTemplate) {
+                        if (fcpPresentTemplate is FCPRestrictedMessageTemplate) {
                             AndroidAutoService.session?.closePresent()
                         }
 
-                        val actionSheetTemplate = FCPRestrictedMessageTemplate(restrictedStateMessage)
+                        val actionSheetTemplate =
+                            FCPRestrictedMessageTemplate(restrictedStateMessage)
                         AndroidAutoService.session?.presentTemplate(
                             template = actionSheetTemplate,
                         )

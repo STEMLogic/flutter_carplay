@@ -24,7 +24,7 @@ private fun dynamicImageWith(
     light3x: UIImage? = null,
     dark: UIImage,
     dark2x: UIImage? = null,
-    dark3x: UIImage? = null
+    dark3x: UIImage? = null,
 ): UIImage {
     // Currently dark theme is default for Android Auto. So we use dark images.
     // Dynamic images for reference for future.
