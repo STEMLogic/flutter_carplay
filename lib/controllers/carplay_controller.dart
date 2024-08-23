@@ -38,11 +38,17 @@ class FlutterCarplayController {
   }
 
   /// Displays a banner on [CPMapTemplate]
-  static void showBanner(String elementId, String message, int color) {
+  static void showBanner(
+    String elementId,
+    String message,
+    int color,
+    int darkColor,
+  ) {
     _methodChannel.invokeMethod(FCPChannelTypes.showBanner.name, {
       '_elementId': elementId,
       'message': message,
       'color': color,
+      'darkColor': darkColor,
     });
   }
 

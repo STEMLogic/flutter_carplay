@@ -43,8 +43,13 @@ class FCPMapButton {
         image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
                                      darkImage: obj["darkImage"] as? String)
 
-        if let tintColor = obj["tintColor"] as? Int {
-            image = image?.withColor(UIColor(argb: tintColor))
+        if let tintColor = obj["tintColor"] as? Int, let darkTintColor = obj["darkTintColor"] as? Int {
+            let lightImage = image?.withColor(UIColor(argb: tintColor))
+            let darkImage = image?.withColor(UIColor(argb: darkTintColor))
+            image = UIImage.image(lightImage: lightImage!, darkImage: darkImage!)
+//            image = image?.withColor(UIColor { traitCollection in
+//                return traitCollection.userInterfaceStyle == .dark ? UIColor(argb: darkTintColor) : UIColor(argb: tintColor)
+//            })
         }
 
         if let focusedImage = obj["focusedImage"] as? String {
@@ -67,5 +72,15 @@ class FCPMapButton {
 
         _super = mapButton
         return mapButton
+    }
+}
+
+extension UIImage {
+    static func image(lightImage: UIImage, darkImage: UIImage) -> UIImage? {
+        if #available(iOS 13.0, *) {
+            return UITraitCollection.current.userInterfaceStyle == .dark ? darkImage : lightImage
+        } else {
+            return lightImage // Fallback for older iOS versions
+        }
     }
 }

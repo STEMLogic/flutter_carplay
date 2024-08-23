@@ -60,7 +60,9 @@ class FCPMapButton(obj: Map<String, Any>) {
                 darkImage = obj["darkImage"] as? String
             )
 
-        (obj["tintColor"] as? Long)?.let { image = image?.withColor(it) }
+        (obj["tintColor"] as? Long)?.let {
+            image = image?.withColor(it, obj["darkTintColor"] as? Long?)
+        }
     }
 
     /** Returns the underlying CPMapButton instance configured with the specified properties. */

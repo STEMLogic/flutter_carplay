@@ -134,8 +134,10 @@ class FCPBannerView {
     }
 
     /** Set the background color for the banner. */
-    fun setBackgroundColor(color: Long) {
-        backgroundColor = color.toInt()
+    fun setBackgroundColor(color: Long, darkColor: Long) {
+        backgroundColor = AndroidAutoService.session?.carContext?.let {
+            if (it.isDarkMode) darkColor.toInt() else color.toInt()
+        } ?: color.toInt()
         getView()
     }
 }

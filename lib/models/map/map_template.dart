@@ -139,8 +139,17 @@ class CPMapTemplate {
   }
 
   /// Displays a banner on [CPMapTemplate]
-  void showBanner({required String message, required int color}) {
-    FlutterCarplayController.showBanner(uniqueId, message, color);
+  void showBanner({
+    required String message,
+    required int color,
+    int? darkColor,
+  }) {
+    FlutterCarplayController.showBanner(
+      uniqueId,
+      message,
+      color,
+      darkColor ?? color,
+    );
   }
 
   /// Hides the banner on [CPMapTemplate]

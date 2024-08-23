@@ -26,6 +26,9 @@ class CPMapButton {
   /// The tintColor of the map button.
   final int? tintColor;
 
+  /// The darkTintColor of the map button.
+  final int? darkTintColor;
+
   /// The image displayed on the focused map button.
   final String? focusedImage;
 
@@ -39,6 +42,7 @@ class CPMapButton {
     this.isEnabled = true,
     this.isHidden = false,
     this.focusedImage,
+    this.darkTintColor,
     this.tintColor,
     this.darkImage,
     this.image,
@@ -47,6 +51,7 @@ class CPMapButton {
 
   Map<String, dynamic> toJson() => {
         'showInActionStrip': showInActionStrip,
+        'darkTintColor': darkTintColor,
         'focusedImage': focusedImage,
         '_elementId': _elementId,
         'isEnabled': isEnabled,

@@ -98,6 +98,11 @@ class FCPMapViewController: UIViewController, CLLocationManagerDelegate {
     /// To perform actions only once when map is loaded
     var mapLoadedOnce = false
 
+    /// Current user interface style
+    var userInterfaceStyle: UIUserInterfaceStyle {
+        return traitCollection.userInterfaceStyle
+    }
+
     /// Default coordinates for the map
     let defaultCoordinates = GeoCoordinates(latitude: -25.02970994781628, longitude: 134.28333173662492)
 
@@ -357,10 +362,10 @@ extension FCPMapViewController {
     /// - Parameters:
     ///   - message: The message to display
     ///   - color: The color of the banner
-    func showBanner(message: String, color: Int) {
+    func showBanner(message: String, color: Int, darkColor: Int) {
         shouldShowBanner = true
         bannerView.setMessage(message)
-        bannerView.setBackgroundColor(color)
+        bannerView.setBackgroundColor(color: color, darkColor: darkColor)
         bannerView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
 
         if !isDashboardSceneActive, bannerViewHeight != bannerView.bounds.height {

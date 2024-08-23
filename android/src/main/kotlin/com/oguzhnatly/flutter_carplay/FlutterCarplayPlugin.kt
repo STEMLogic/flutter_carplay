@@ -570,15 +570,20 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 val elementId = args?.get("_elementId") as? String
                 val message = args?.get("message") as? String
                 val color = args?.get("color") as? Long
+                val darkColor = args?.get("darkColor") as? Long
 
-                if (args == null || elementId == null || message == null || color == null) {
+                if (args == null || elementId == null || message == null || color == null || darkColor == null) {
                     result.success(false)
                     return
                 }
 
                 // Find the map template based on the provided element ID
                 val template = FlutterCarplayPlugin.findMapTemplate(elementId) { mapTemplate ->
-                    mapTemplate.fcpMapViewController?.showBanner(message = message, color = color)
+                    mapTemplate.fcpMapViewController?.showBanner(
+                        message = message,
+                        color = color,
+                        darkColor = darkColor,
+                    )
                 }
                 result.success(template != null)
             }

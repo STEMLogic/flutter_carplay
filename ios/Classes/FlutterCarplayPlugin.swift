@@ -453,7 +453,8 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
             guard let args = call.arguments as? [String: Any],
                   let elementId = args["_elementId"] as? String,
                   let message = args["message"] as? String,
-                  let color = args["color"] as? Int
+                  let color = args["color"] as? Int,
+                  let darkColor = args["darkColor"] as? Int
             else {
                 result(false)
                 return
@@ -461,7 +462,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
 
             // Find the map template based on the provided element ID
             FlutterCarplayPlugin.findMapTemplate(elementId: elementId) { mapTemplate in
-                mapTemplate.fcpMapViewController?.showBanner(message: message, color: color)
+                mapTemplate.fcpMapViewController?.showBanner(message: message, color: color, darkColor: darkColor)
                 return result(true)
             }
             result(false)

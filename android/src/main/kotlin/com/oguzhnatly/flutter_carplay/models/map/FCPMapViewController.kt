@@ -591,10 +591,10 @@ class FCPMapViewController : SurfaceCallback {
  * @param message The message to display.
  * @param color The color of the banner.
  */
-fun FCPMapViewController.showBanner(message: String, color: Long) {
+fun FCPMapViewController.showBanner(message: String, color: Long, darkColor: Long) {
     shouldShowBanner = true
     bannerView.setMessage(message)
-    bannerView.setBackgroundColor(color)
+    bannerView.setBackgroundColor(color = color, darkColor = darkColor)
     bannerView.isHidden = isDashboardSceneActive || isPanningInterfaceVisible
 
     if (!isDashboardSceneActive && bannerViewHeight != bannerView.height) {

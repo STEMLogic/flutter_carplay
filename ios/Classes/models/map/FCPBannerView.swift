@@ -60,8 +60,12 @@ extension FCPBannerView {
     }
 
     /// Sets the content view background color
-    func setBackgroundColor(_ color: Int) {
-        contentView.backgroundColor = UIColor(argb: color)
-        messageLabel.textColor = contentView.backgroundColor?.contrastingColor() ?? .white
+    func setBackgroundColor(color: Int, darkColor: Int) {
+        contentView.backgroundColor = UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? UIColor(argb: darkColor) : UIColor(argb: color)
+        }
+        messageLabel.textColor = UIColor { traitCollection in
+            return traitCollection.userInterfaceStyle == .dark ? UIColor(argb: darkColor).contrastingColor() : UIColor(argb: color).contrastingColor()
+        }
     }
 }
