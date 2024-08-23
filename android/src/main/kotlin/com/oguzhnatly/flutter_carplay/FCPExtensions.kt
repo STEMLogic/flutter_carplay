@@ -1,7 +1,10 @@
 package com.oguzhnatly.flutter_carplay
 
+import android.graphics.Color
+import androidx.annotation.ColorInt
 import androidx.car.app.model.CarColor
 import androidx.car.app.model.CarIcon
+import androidx.core.graphics.ColorUtils
 import java.io.ByteArrayOutputStream
 
 /**
@@ -17,7 +20,28 @@ fun UIImage.withColor(color: Long, colorDark: Long? = null): UIImage {
         .build()
 }
 
-/// Creates a dynamic image that supports displaying a different image asset when dark mode is active.
+/**
+ * Returns the contrast text color for the given color.
+ *
+ * @param color The color to calculate the contrast color for.
+ * @return The contrast text color for the given color.
+ */
+@ColorInt
+fun getContrastTextColor(@ColorInt color: Int): Int {
+    val whiteContrast = ColorUtils.calculateContrast(Color.WHITE, color)
+    val blackContrast = ColorUtils.calculateContrast(Color.BLACK, color)
+
+    return if (whiteContrast > blackContrast) Color.WHITE else Color.BLACK
+}
+
+/**
+ * Creates a dynamic image that supports displaying a different image asset
+ * when dark mode is active.
+ *
+ * @param light The image name for light mode
+ * @param dark The image name for dark mode
+ * @return The UIImage
+ */
 private fun dynamicImageWith(
     light: UIImage,
     light2x: UIImage? = null,

@@ -19,6 +19,7 @@ import com.here.sdk.mapview.MapImageOverlay
 import com.here.sdk.mapview.MapSurface
 import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.FlutterCarplayPlugin
+import com.oguzhnatly.flutter_carplay.getContrastTextColor
 import java.io.ByteArrayOutputStream
 
 /** A custom banner view with a message label for the map view controller. */
@@ -85,7 +86,8 @@ class FCPBannerView {
                 width = mapView!!.viewportSize.width.toInt() - visibleArea!!.left
                 text = textView
                 textSize = 24F
-                setTextColor(Color.WHITE)
+                backgroundColor?.let { setTextColor(getContrastTextColor(it)) }
+                    ?: setTextColor(Color.WHITE)
                 setPadding(20, 8, 20, 8)
                 gravity = android.view.Gravity.CENTER
             })

@@ -426,6 +426,23 @@ extension UIColor {
             alpha: CGFloat((argb >> 24) & 0xFF) / 255.0
         )
     }
+
+    /// Returns either black or white color depending on which is more contrasting with the receiver.
+    func contrastingColor() -> UIColor {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        // Get the RGB components of the color
+        getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+        // Calculate brightness (using the luminance formula)
+        let brightness = (red * 299 + green * 587 + blue * 114) / 1000
+
+        // If brightness is greater than 0.5, return black; otherwise, return white
+        return brightness > 0.5 ? UIColor.black : UIColor.white
+    }
 }
 
 /// Extension on UIView to fix a view in a container view.
