@@ -40,17 +40,16 @@ class FCPMapButton {
         isEnabled = obj["isEnabled"] as? Bool ?? true
         isHidden = obj["isHidden"] as? Bool ?? false
 
-        image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
-                                     darkImage: obj["darkImage"] as? String)
+        let tintColor: UIColor? = if let color = obj["tintColor"] as? Int {
+            UIColor(argb: color)
+        } else { nil }
 
-        if let tintColor = obj["tintColor"] as? Int, let darkTintColor = obj["darkTintColor"] as? Int {
-            let lightImage = image?.withColor(UIColor(argb: tintColor))
-            let darkImage = image?.withColor(UIColor(argb: darkTintColor))
-            image = UIImage.image(lightImage: lightImage!, darkImage: darkImage!)
-//            image = image?.withColor(UIColor { traitCollection in
-//                return traitCollection.userInterfaceStyle == .dark ? UIColor(argb: darkTintColor) : UIColor(argb: tintColor)
-//            })
-        }
+        let darkTintColor: UIColor? = if let color = obj["darkTintColor"] as? Int {
+            UIColor(argb: color)
+        } else { nil }
+
+        image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
+                                     darkImage: obj["darkImage"] as? String, color: tintColor, darkColor: darkTintColor)
 
         if let focusedImage = obj["focusedImage"] as? String {
             self.focusedImage = UIImage.dynamicImage(lightImage: focusedImage)

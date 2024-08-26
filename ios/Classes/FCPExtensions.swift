@@ -247,7 +247,7 @@ extension UIImage {
     /// Apply color tint to image.
     /// - Parameter color: The color to apply
     /// - Returns: The tinted image
-    func withColor(_ color: UIColor) -> UIImage? {
+    func withColor(_ color: UIColor) -> UIImage {
         UIGraphicsBeginImageContextWithOptions(size, false, scale)
 
         let drawRect = CGRect(x: 0, y: 0, width: size.width, height: size.height)
@@ -313,32 +313,46 @@ extension UIImage {
     /// Get dynamic theme image
     /// - Parameter lightImage: The image name for light mode
     /// - Parameter darkImage: The image name for dark mode
+    /// - Parameter color: The color to apply for light mode
+    /// - Parameter darkColor: The color to apply for dark mode
     /// - Returns: The UIImage
-    static func dynamicImage(lightImage: String? = nil, darkImage: String? = nil) -> UIImage? {
+    static func dynamicImage(lightImage: String? = nil, darkImage: String? = nil, color: UIColor? = nil, darkColor: UIColor? = nil) -> UIImage? {
         if let lightImage = lightImage,
            let darkImage = darkImage
         {
+            let _light = UIImage().fromFlutterAsset(name: lightImage)
+            let _light2x = UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@2x.png"))
+            let _light3x = UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
+            let _dark = UIImage().fromFlutterAsset(name: darkImage)
+            let _dark2x = UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@2x.png"))
+            let _dark3x = UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
             return UIImage.dynamicImageWith(
-                light: UIImage().fromFlutterAsset(name: lightImage),
-                light2x: UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@2x.png")),
-                light3x: UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@3x.png")),
-                dark: UIImage().fromFlutterAsset(name: darkImage),
-                dark2x: UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@2x.png")),
-                dark3x: UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
+                light: color != nil ? _light.withColor(color!) : _light,
+                light2x: color != nil ? _light2x.withColor(color!) : _light2x,
+                light3x: color != nil ? _light3x.withColor(color!) : _light3x,
+                dark: darkColor != nil ? _dark.withColor(darkColor!) : _dark,
+                dark2x: darkColor != nil ? _dark2x.withColor(darkColor!) : _dark2x,
+                dark3x: darkColor != nil ? _dark3x.withColor(darkColor!) : _dark3x
             )
         } else if let lightImage = lightImage {
+            let _light = UIImage().fromFlutterAsset(name: lightImage)
+            let _light2x = UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@2x.png"))
+            let _light3x = UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
             return UIImage.dynamicImageWith(
-                light: UIImage().fromFlutterAsset(name: lightImage),
-                light2x: UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@2x.png")),
-                light3x: UIImage().fromFlutterAsset(name: lightImage.replacingLastOccurrenceOfString(".png", with: "@3x.png")),
+                light: color != nil ? _light.withColor(color!) : _light,
+                light2x: color != nil ? _light2x.withColor(color!) : _light2x,
+                light3x: color != nil ? _light3x.withColor(color!) : _light3x,
                 dark: UIImage()
             )
         } else if let darkImage = darkImage {
+            let _dark = UIImage().fromFlutterAsset(name: darkImage)
+            let _dark2x = UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@2x.png"))
+            let _dark3x = UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
             return UIImage.dynamicImageWith(
                 light: UIImage(),
-                dark: UIImage().fromFlutterAsset(name: darkImage),
-                dark2x: UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@2x.png")),
-                dark3x: UIImage().fromFlutterAsset(name: darkImage.replacingLastOccurrenceOfString(".png", with: "@3x.png"))
+                dark: darkColor != nil ? _dark.withColor(darkColor!) : _dark,
+                dark2x: darkColor != nil ? _dark2x.withColor(darkColor!) : _dark2x,
+                dark3x: darkColor != nil ? _dark3x.withColor(darkColor!) : _dark3x
             )
         }
 
