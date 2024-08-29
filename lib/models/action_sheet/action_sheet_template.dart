@@ -42,7 +42,7 @@ class CPActionSheetTemplate extends CPPresentTemplate {
         'message': message,
         'actions': actions.map((e) => e.toJson()).toList(),
         'isLongMessage': isLongMessage,
-        'restrictedStateMessage': restrictedStateMessage
+        'restrictedStateMessage': restrictedStateMessage,
       };
 
   String get uniqueId {

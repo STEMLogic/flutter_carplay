@@ -166,6 +166,7 @@ class AndroidAutoSession : Session() {
         super.onCarConfigurationChanged(newConfiguration)
 
         (FlutterCarplayPlugin.rootViewController as? FCPMapViewController)?.onCarConfigurationChanged()
+        appManager.invalidate()
     }
 
     /**

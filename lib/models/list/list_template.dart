@@ -99,7 +99,7 @@ class CPListTemplate {
         'showsTabBadge': showsTabBadge,
         'systemIcon': systemIcon,
         'backButton': backButton?.toJson(),
-        'restrictedStateMessage': restrictedStateMessage
+        'restrictedStateMessage': restrictedStateMessage,
       };
 
   /// Update the properties of the [CPListTemplate]

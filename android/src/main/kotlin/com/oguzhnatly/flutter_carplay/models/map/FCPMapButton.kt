@@ -1,6 +1,7 @@
 package com.oguzhnatly.flutter_carplay.models.map
 
 import androidx.car.app.model.Action
+import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import com.oguzhnatly.flutter_carplay.CPMapButton
 import com.oguzhnatly.flutter_carplay.FCPChannelTypes
@@ -61,7 +62,11 @@ class FCPMapButton(obj: Map<String, Any>) {
             )
 
         (obj["tintColor"] as? Long)?.let {
-            image = image?.withColor(it, obj["darkTintColor"] as? Long?)
+            image = image?.withColor(
+                if (AndroidAutoService.session?.carContext?.isDarkMode == true) obj["darkTintColor"] as? Long
+                    ?: it else it
+            )
+
         }
     }
 

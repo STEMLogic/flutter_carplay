@@ -49,7 +49,9 @@ class FCPMapButton {
         } else { nil }
 
         image = UIImage.dynamicImage(lightImage: obj["image"] as? String,
-                                     darkImage: obj["darkImage"] as? String, color: tintColor, darkColor: darkTintColor)
+                                     darkImage: obj["darkImage"] as? String,
+                                     color: tintColor,
+                                     darkColor: darkTintColor)
 
         if let focusedImage = obj["focusedImage"] as? String {
             self.focusedImage = UIImage.dynamicImage(lightImage: focusedImage)
