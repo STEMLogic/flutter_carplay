@@ -21,11 +21,17 @@ class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.S
     /// The underlying CPSearchTemplate instance.
     private lateinit var _super: CPSearchTemplate
 
-    /// A debounce object for optimizing search events.
-    private var debounce = Debounce(CoroutineScope(Dispatchers.Main))
+    /// A debounce object for optimizing search updated events.
+    private var searchUpdatedDebounce = Debounce(CoroutineScope(Dispatchers.Main))
+
+    /// A debounce object for optimizing search button pressed events.
+    private var searchPressedDebounce = Debounce(CoroutineScope(Dispatchers.Main))
 
     /// The list of items to be displayed in the search template.
     private var resultItems: ItemList? = null
+
+    /// The search query.
+    private var searchQuery: String = ""
 
     init {
         val elementIdValue = obj["_elementId"] as? String
@@ -59,7 +65,8 @@ class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.S
 
     /** Handles the search text change event. */
     override fun onSearchTextChanged(searchText: String) {
-        debounce.debounce(interval = 500L) {
+        searchQuery = searchText
+        searchUpdatedDebounce.debounce(interval = 500L) {
             FCPStreamHandlerPlugin.sendEvent(
                 type = FCPChannelTypes.onSearchTextUpdated.name,
                 data = mapOf("elementId" to elementId, "query" to searchText)
@@ -70,9 +77,15 @@ class FCPSearchTemplate(obj: Map<String, Any>) : FCPTemplate(), SearchTemplate.S
     /** Handles the search button press event. */
     override fun onSearchSubmitted(searchText: String) {
         FCPStreamHandlerPlugin.sendEvent(
-            type = FCPChannelTypes.onSearchButtonPressed.name,
-            data = mapOf("elementId" to elementId)
+            type = FCPChannelTypes.onSearchTextUpdated.name,
+            data = mapOf("elementId" to elementId, "query" to searchQuery)
         )
+        searchPressedDebounce.debounce(interval = 500L) {
+            FCPStreamHandlerPlugin.sendEvent(
+                type = FCPChannelTypes.onSearchButtonPressed.name,
+                data = mapOf("elementId" to elementId)
+            )
+        }
     }
 
     /** Handles the search performed event. */
