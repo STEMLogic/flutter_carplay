@@ -134,19 +134,23 @@ class AndroidAutoSession : Session() {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
 
-        carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { _, _ ->
-            val hardwareManager = carContext.getCarService(CarHardwareManager::class.java)
-            hardwareManager.carInfo.addSpeedListener(Executors.newSingleThreadExecutor()) {
-                val isRestrictedNew = (it.displaySpeedMetersPerSecond.value ?: 0f) > 0f
-                if (isRestricted == isRestrictedNew) return@addSpeedListener
-                isRestricted = isRestrictedNew
-                CoroutineScope(Dispatchers.Main).launch {
-                    FCPStreamHandlerPlugin.sendEvent(
-                        type = FCPChannelTypes.onCarUxRestrictionChanged.name,
-                        data = mapOf("isRestricted" to isRestricted)
-                    )
+        // set the speed listener only when the Location permission is granted
+        carContext.requestPermissions(listOf("android.permission.ACCESS_FINE_LOCATION")) { granPermissions, _ ->
+            if(granPermissions.isEmpty()) return@requestPermissions
+            carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { _, _ ->
+                val hardwareManager = carContext.getCarService(CarHardwareManager::class.java)
+                hardwareManager.carInfo.addSpeedListener(Executors.newSingleThreadExecutor()) {
+                    val isRestrictedNew = (it.displaySpeedMetersPerSecond.value ?: 0f) > 0f
+                    if (isRestricted == isRestrictedNew) return@addSpeedListener
+                    isRestricted = isRestrictedNew
+                    CoroutineScope(Dispatchers.Main).launch {
+                        FCPStreamHandlerPlugin.sendEvent(
+                            type = FCPChannelTypes.onCarUxRestrictionChanged.name,
+                            data = mapOf("isRestricted" to isRestricted)
+                        )
+                    }
+                    Logger.log("CarSpeedTest : ${it.displaySpeedMetersPerSecond} ")
                 }
-                Logger.log("CarSpeedTest : ${it.displaySpeedMetersPerSecond} ")
             }
         }
 
