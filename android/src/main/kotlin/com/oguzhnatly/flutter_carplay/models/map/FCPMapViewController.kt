@@ -344,12 +344,13 @@ class FCPMapViewController : SurfaceCallback {
 
                 if (mapView == null) return@updateMapCoordinatesHandler
 
+                val lastKnownLocation = mapController?.lastKnownLocation
+
                 when {
-                    mapController?.lastKnownLocation != null -> {
-                        val location = mapController!!.lastKnownLocation!!
+                    lastKnownLocation != null -> {
                         renderInitialMarker(
-                            coordinates = location.coordinates,
-                            accuracy = location.horizontalAccuracyInMeters ?: 0.0
+                            coordinates = lastKnownLocation.coordinates,
+                            accuracy = lastKnownLocation.horizontalAccuracyInMeters ?: 0.0
                         )
                     }
 

@@ -27,6 +27,7 @@ import com.here.sdk.location.LocationEngine
 import com.here.sdk.location.LocationEngineStatus
 import com.here.sdk.location.LocationFeature
 import com.here.sdk.location.LocationStatusListener
+import com.oguzhnatly.flutter_carplay.AndroidAutoService
 import com.oguzhnatly.flutter_carplay.Bool
 import kotlin.math.abs
 
@@ -56,10 +57,7 @@ class HEREPositioningProvider {
         }
 
     init {
-//        val consentEngine: ConsentEngine
-
         try {
-//            consentEngine = ConsentEngine()
             locationEngine = LocationEngine()
         } catch (e: InstantiationErrorException) {
             throw RuntimeException("Initialization failed: " + e.message)
@@ -76,15 +74,10 @@ class HEREPositioningProvider {
             locationEngine?.addLocationStatusListener(locationStatusListener)
             locationEngineStatus = locationEngine?.start(LocationAccuracy.NAVIGATION)
         }
-
-        // Ask user to optionally opt in to HERE's data collection / improvement program.
-//        if (consentEngine.userConsentState == Consent.UserReply.NOT_HANDLED) {
-//            consentEngine.requestUserConsent()
-//        }
     }
 
     val lastKnownLocation: Location?
-        get() = locationEngine?.lastKnownLocation
+        get() = if (AndroidAutoService.session?.hasLocationPermission == true) locationEngine?.lastKnownLocation else null
 
     // Does nothing when engine is already running.
     fun startLocating(updateListener: LocationListener?, accuracy: LocationAccuracy?) {

@@ -1,6 +1,7 @@
 package com.oguzhnatly.flutter_carplay
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import androidx.car.app.AppManager
 import androidx.car.app.CarToast
@@ -42,6 +43,9 @@ class AndroidAutoSession : Session() {
 
     /// A flag indicating whether the session is restricted by driving mode.
     var isRestricted = false
+
+    /// A flag indicating whether the session has location permission.
+    val hasLocationPermission get() = carContext.checkSelfPermission("android.permission.ACCESS_FINE_LOCATION") == PackageManager.PERMISSION_GRANTED
 
     /// The screen manager used to manage the screens in the Android Auto session.
     val screenManager = carContext.getCarService(ScreenManager::class.java)
@@ -107,6 +111,7 @@ class AndroidAutoSession : Session() {
                     Logger.log("onResume")
                     FlutterCarplayTemplateManager.fcpConnectionStatus =
                         FCPConnectionTypes.CONNECTED
+                    setSpeedListener()
 
                     super.onResume(owner)
                 }
@@ -134,9 +139,15 @@ class AndroidAutoSession : Session() {
             carContext.getCarService(AppManager::class.java).setSurfaceCallback(it)
         }
 
-        // set the speed listener only when the Location permission is granted
-        carContext.requestPermissions(listOf("android.permission.ACCESS_FINE_LOCATION")) { granPermissions, _ ->
-            if(granPermissions.isEmpty()) return@requestPermissions
+        setSpeedListener()
+
+        return (FlutterCarplayPlugin.fcpRootTemplate ?: RootTemplate()).toScreen(carContext)
+    }
+
+    /** Sets the speed listener only when the Location permission is granted */
+    private fun setSpeedListener() {
+        carContext.requestPermissions(listOf("android.permission.ACCESS_FINE_LOCATION")) { grantedPermissions, _ ->
+            if (grantedPermissions.isEmpty()) return@requestPermissions
             carContext.requestPermissions(listOf("com.google.android.gms.permission.CAR_SPEED")) { _, _ ->
                 val hardwareManager = carContext.getCarService(CarHardwareManager::class.java)
                 hardwareManager.carInfo.addSpeedListener(Executors.newSingleThreadExecutor()) {
@@ -153,8 +164,6 @@ class AndroidAutoSession : Session() {
                 }
             }
         }
-
-        return (FlutterCarplayPlugin.fcpRootTemplate ?: RootTemplate()).toScreen(carContext)
     }
 
     /** Displays a toast with the given text and duration. */
