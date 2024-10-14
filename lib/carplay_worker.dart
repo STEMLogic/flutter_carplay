@@ -77,6 +77,10 @@ class FlutterCarplay {
   /// location is updated from CarPlay.
   static Function()? _onLocationUpdatedFromCarplay;
 
+  /// A listener function that will be triggered when
+  /// change status triggered from CarPlay.
+  static Function(String status)? _onChangeStatusTriggeredFromCarplay;
+
   /// Creates an [FlutterCarplay] and starts the connection.
   FlutterCarplay() {
     _eventBroadcast = _carPlayController.eventChannel
@@ -183,6 +187,8 @@ class FlutterCarplay {
           _onCarUxRestrictionChanged?.call(
             isRestricted: event['data']['isRestricted'],
           );
+        case FCPChannelTypes.onChangeStatusTriggeredFromCarplay:
+          _onChangeStatusTriggeredFromCarplay?.call(event['data']['status']);
         default:
           break;
       }
@@ -501,8 +507,6 @@ class FlutterCarplay {
     _onCarUxRestrictionChanged = null;
   }
 
-  /// Adds the specified [CPSpeaker] utterance to the queue of the speech
-  /// synthesizer in CarPlay.
   /// Callback function will be fired when location updated from CarPlay.
   static void addListenerOnLocationUpdatedFromCarplay({
     Function()? onLocationUpdatedFromCarplay,
@@ -514,6 +518,19 @@ class FlutterCarplay {
   /// location updated from CarPlay.
   static void removeListenerOnLocationUpdatedFromCarplay() {
     _onLocationUpdatedFromCarplay = null;
+  }
+
+  /// Callback function will be fired when change status triggered from CarPlay.
+  static void addListenerOnChangeStatusTriggeredFromCarplay({
+    Function(String status)? onChangeStatusTriggeredFromCarplay,
+  }) {
+    _onChangeStatusTriggeredFromCarplay = onChangeStatusTriggeredFromCarplay;
+  }
+
+  /// Removes the callback function that has been set before in order to listen
+  /// location updated from CarPlay.
+  static void removeListenerOnChangeStatusTriggeredFromCarplay() {
+    _onChangeStatusTriggeredFromCarplay = null;
   }
 
   /// Adds the specified [CPSpeaker] utterance to the queue of the speech synthesizer in CarPlay.

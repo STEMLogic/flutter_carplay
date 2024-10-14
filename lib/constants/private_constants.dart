@@ -197,4 +197,7 @@ enum FCPChannelTypes {
 
   /// Event for location updated from CarPlay.
   onLocationUpdatedFromCarplay,
+
+  /// Event for change status triggered from CarPlay.
+  onChangeStatusTriggeredFromCarplay,
 }

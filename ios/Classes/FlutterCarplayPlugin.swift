@@ -86,6 +86,14 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
         streamHandler = FCPStreamHandlerPlugin(registrar: registrar)
     }
 
+    /// Sends a status change triggered event to the Flutter side.
+    ///
+    /// - Parameter status: The status that to change to.
+    public static func triggerChangeStatus(status: String) {
+        FCPStreamHandlerPlugin.sendEvent(type: FCPChannelTypes.onChangeStatusTriggeredFromCarplay,
+                                         data: ["status": status])
+    }
+
     /// Handles a Flutter method call and provides a result callback.
     ///
     /// This method is responsible for processing Flutter method calls and producing a result

@@ -19,6 +19,10 @@ class FlutterCarplaySceneDelegate: NSObject {
         }
     }
 
+    func scene(_: UIScene, continue userActivity: NSUserActivity) {
+        FlutterCarplayPlugin.triggerChangeStatus(status: userActivity.userInfo!["status"] as? String ?? "")
+    }
+
     func sceneDidDisconnect(_ scene: UIScene) {
         var carplayConnectionStatus = FlutterCarplayTemplateManager.shared.carplayConnectionStatus
         var dashboardConnectionStatus = FlutterCarplayTemplateManager.shared.dashboardConnectionStatus
