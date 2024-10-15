@@ -201,6 +201,9 @@ enum class FCPChannelTypes {
 
     /// Event for updated location from Android Auto.
     onLocationUpdatedFromCarplay,
+
+    /// Event for change status triggered from Android Auto.
+    onChangeStatusTriggeredFromCarplay,
 }
 
 /** Enum defining different accessory types. */

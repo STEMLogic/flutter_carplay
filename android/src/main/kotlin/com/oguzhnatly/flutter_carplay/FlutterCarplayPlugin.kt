@@ -65,21 +65,19 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
     private lateinit var channel: MethodChannel
 
     companion object {
-
-        /// The root template to be displayed on CarPlay.
+        /// The root template to be displayed on Android Auto.
         var fcpRootTemplate: FCPRootTemplate? = null
 
-        /// The root view controller for CarPlay.
+        /// The root view controller for Android Auto.
         var rootViewController: SurfaceCallback? = null
 
-        /// The root template for CarPlay.
+        /// The root template for Android Auto.
         var rootTemplate: CPTemplate? = null
 
-
-        /// The present template object for CarPlay modals.
+        /// The present template object for Android Auto modals.
         var fcpPresentTemplate: FCPPresentTemplate? = null
 
-        // The Template history for CarPlay.
+        // The Template history for Android Auto.
         var fcpTemplateHistory: List<FCPTemplate> = emptyList()
             private set
             get() = (AndroidAutoService.session?.screenManager?.screenStack?.toList() as? List<FCPScreen>)?.map { it.fcpTemplate }
@@ -87,9 +85,21 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
 
         /// The Flutter plugin registrar.
         var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding? = null
+
+        /**
+         * Sends a status change triggered event to the Flutter side.
+         *
+         * @param status The status to change to.
+         */
+        fun triggerChangeStatus(status: String) {
+            FCPStreamHandlerPlugin.sendEvent(
+                type = FCPChannelTypes.onChangeStatusTriggeredFromCarplay.name,
+                data = mapOf("status" to status)
+            )
+        }
     }
 
-    /// The stream handler for CarPlay communication.
+    /// The stream handler for Android Auto communication.
     private var streamHandler: FCPStreamHandlerPlugin? = null
 
     /**
@@ -192,7 +202,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 if (fcpPresentTemplate == null) {
                     result.error(
                         "ERROR",
-                        "To activate a voice control state, a voice control template must be presented to CarPlay Screen at first.",
+                        "To activate a voice control state, a voice control template must be presented to Android Auto Screen at first.",
                         null
                     )
                     return
@@ -214,7 +224,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 if (fcpPresentTemplate == null) {
                     result.error(
                         "ERROR",
-                        "To get the active voice control state identifier, a voice control template must be presented to CarPlay Screen at first.",
+                        "To get the active voice control state identifier, a voice control template must be presented to Android Auto Screen at first.",
                         null
                     )
                     return
@@ -233,7 +243,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 if (fcpPresentTemplate == null) {
                     result.error(
                         "ERROR",
-                        "To start the voice control, a voice control template must be presented to CarPlay Screen at first.",
+                        "To start the voice control, a voice control template must be presented to Android Auto Screen at first.",
                         null
                     )
                     return
@@ -250,7 +260,7 @@ class FlutterCarplayPlugin : FlutterPlugin, MethodCallHandler {
                 if (fcpPresentTemplate == null) {
                     result.error(
                         "ERROR",
-                        "To stop the voice control, a voice control template must be presented to CarPlay Screen at first.",
+                        "To stop the voice control, a voice control template must be presented to Android Auto Screen at first.",
                         null
                     )
                     return
@@ -934,7 +944,7 @@ private fun FlutterCarplayPlugin.Companion.createRootTemplate(
 }
 
 /**
- * Sets the root template for CarPlay based on the provided FCPRootTemplate.
+ * Sets the root template for Android Auto based on the provided FCPRootTemplate.
  *
  * @param fcpRootTemplate The FCPRootTemplate to be set as the root template.
  * @param args Additional arguments for setting the root template.
@@ -950,7 +960,7 @@ private fun FlutterCarplayPlugin.Companion.setRootTemplate(
     when (fcpRootTemplate) {
         //        is FCPTabBarTemplate -> {
         //            // Ensure that the number of templates in the tab bar template is within the
-        // CarPlay limit
+        // Android Auto limit
         //            if (rootTemplate.getTemplates().count > 5) {
         //                result.success(false)
         //                return
@@ -971,7 +981,7 @@ private fun FlutterCarplayPlugin.Companion.setRootTemplate(
         //        }
         //
         is FCPMapTemplate -> {
-            // For FCPMapTemplate, set the rootViewController and update the CarPlay window's
+            // For FCPMapTemplate, set the rootViewController and update the Android Auto window's
             // rootViewController
             cpRootTemplate = fcpRootTemplate.getTemplate()
 

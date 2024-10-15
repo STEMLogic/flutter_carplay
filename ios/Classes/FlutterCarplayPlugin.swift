@@ -88,7 +88,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
 
     /// Sends a status change triggered event to the Flutter side.
     ///
-    /// - Parameter status: The status that to change to.
+    /// - Parameter status: The status to change to.
     public static func triggerChangeStatus(status: String) {
         FCPStreamHandlerPlugin.sendEvent(type: FCPChannelTypes.onChangeStatusTriggeredFromCarplay,
                                          data: ["status": status])
