@@ -177,6 +177,14 @@ class FlutterCarplayController {
     );
   }
 
+  /// Resets the status to be changed
+  static void resetStatusToBeChanged() {
+    _methodChannel.invokeMethod(
+      FCPChannelTypes.resetStatusToBeChanged.name,
+      {},
+    );
+  }
+
   /// Sends back the action text for the next maneuver.
   static void onManeuverActionTextRequestComplete(
     String actionText, {

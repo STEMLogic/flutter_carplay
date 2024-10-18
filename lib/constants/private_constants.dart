@@ -200,4 +200,7 @@ enum FCPChannelTypes {
 
   /// Event for change status triggered from CarPlay.
   onChangeStatusTriggeredFromCarplay,
+
+  /// Event for reset status change.
+  resetStatusToBeChanged,
 }

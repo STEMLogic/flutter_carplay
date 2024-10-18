@@ -219,6 +219,9 @@ enum FCPChannelTypes {
 
     /// Event for change status triggered from CarPlay.
     static let onChangeStatusTriggeredFromCarplay = "onChangeStatusTriggeredFromCarplay"
+
+    /// Event for reset status change.
+    static let resetStatusToBeChanged = "resetStatusToBeChanged"
 }
 
 /// Enum defining different types of alert actions in CarPlay.

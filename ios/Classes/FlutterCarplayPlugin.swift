@@ -33,6 +33,9 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
     /// Indicates whether animations should be used.
     public static var animated: Bool = false
 
+    /// The trigger change status.
+    public static var statusToBeChanged: String?
+
     /// The present template object for CarPlay modals.
     private var fcpPresentTemplate: FCPPresentTemplate?
 
@@ -119,6 +122,10 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
             }
 
             setRootTemplate(rootTemplate, args: args, result: result)
+
+            if let nextStatus = FlutterCarplayPlugin.statusToBeChanged {
+                FlutterCarplayPlugin.triggerChangeStatus(status: nextStatus)
+            }
 
         case FCPChannelTypes.forceUpdateRootTemplate:
             FlutterCarplaySceneDelegate.forceUpdateRootTemplate(completion: { completed, _ in
@@ -441,7 +448,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 return result(true)
             }
 
-            result(false)
+            result(true)
 
         case FCPChannelTypes.hideTripPreviews:
             guard let args = call.arguments as? [String: Any],
@@ -455,7 +462,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.hideTripPreviews()
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.showBanner:
             guard let args = call.arguments as? [String: Any],
@@ -473,7 +480,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.fcpMapViewController?.showBanner(message: message, color: color, darkColor: darkColor)
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.hideBanner:
             guard let args = call.arguments as? [String: Any],
@@ -488,7 +495,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.fcpMapViewController?.hideBanner()
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.showToast:
             guard let args = call.arguments as? [String: Any],
@@ -505,7 +512,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.fcpMapViewController?.showToast(message: message, duration: TimeInterval(duration))
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.showOverlay:
             guard let args = call.arguments as? [String: Any],
@@ -525,7 +532,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.fcpMapViewController?.showOverlay(primaryTitle: primaryTitle, secondaryTitle: secondaryTitle, subtitle: subtitle)
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.hideOverlay:
             guard let args = call.arguments as? [String: Any],
@@ -540,7 +547,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.fcpMapViewController?.hideOverlay()
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.showPanningInterface:
             guard let args = call.arguments as? [String: Any],
@@ -556,7 +563,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.showPanningInterface(animated: animated)
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.dismissPanningInterface:
             guard let args = call.arguments as? [String: Any],
@@ -572,7 +579,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.dismissPanningInterface(animated: animated)
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.zoomInMapView:
             guard let args = call.arguments as? [String: Any],
@@ -588,7 +595,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 return result(true)
             }
 
-            result(false)
+            result(true)
 
         case FCPChannelTypes.zoomOutMapView:
             guard let args = call.arguments as? [String: Any],
@@ -604,7 +611,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 return result(true)
             }
 
-            result(false)
+            result(true)
 
         case FCPChannelTypes.startNavigation:
             guard let args = call.arguments as? [String: Any],
@@ -621,7 +628,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.startNavigation(trip: cpTrip)
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.stopNavigation:
             guard let args = call.arguments as? [String: Any],
@@ -636,7 +643,7 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
                 mapTemplate.stopNavigation()
                 return result(true)
             }
-            result(false)
+            result(true)
 
         case FCPChannelTypes.onManeuverActionTextRequestComplete:
             guard let args = call.arguments as? [String: Any],
@@ -733,7 +740,11 @@ public class FlutterCarplayPlugin: NSObject, FlutterPlugin {
 
             updateMapCoordinatesHandler?(mapCoordinates)
 
-            result(false)
+            result(true)
+
+        case FCPChannelTypes.resetStatusToBeChanged:
+            FlutterCarplayPlugin.statusToBeChanged = nil
+            result(true)
 
         default:
             result(false)

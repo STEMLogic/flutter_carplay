@@ -11,16 +11,25 @@ import UIKit
 class FlutterCarplaySceneDelegate: NSObject {
     // MARK: UISceneDelegate
 
-    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options _: UIScene.ConnectionOptions) {
+    func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options: UIScene.ConnectionOptions) {
         if scene is CPTemplateApplicationScene, session.configuration.name == "CarPlayConfiguration" {
             MemoryLogger.shared.appendEvent("STEMConnect application scene will connect.")
         } else if scene is CPTemplateApplicationDashboardScene, session.configuration.name == "CarPlayDashboardConfiguration" {
             MemoryLogger.shared.appendEvent("STEMConnect application dashboard scene will connect.")
         }
+
+        let userActivity = options.userActivities.first(where: {
+            $0.activityType == "com.stemlogic.stemconnect.changestatusintent" || $0.activityType == "com.stemlogic.stemconnect.changenextstatusintent"
+        })
+        let status = userActivity?.userInfo?["status"] as? String ?? ""
+        FlutterCarplayPlugin.statusToBeChanged = status
+        FlutterCarplayPlugin.triggerChangeStatus(status: status)
     }
 
     func scene(_: UIScene, continue userActivity: NSUserActivity) {
-        FlutterCarplayPlugin.triggerChangeStatus(status: userActivity.userInfo!["status"] as? String ?? "")
+        let status = userActivity.userInfo?["status"] as? String ?? ""
+        FlutterCarplayPlugin.statusToBeChanged = status
+        FlutterCarplayPlugin.triggerChangeStatus(status: status)
     }
 
     func sceneDidDisconnect(_ scene: UIScene) {
