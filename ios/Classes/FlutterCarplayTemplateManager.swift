@@ -203,7 +203,10 @@ class FlutterCarplayTemplateManager: NSObject, CPInterfaceControllerDelegate, CP
             FlutterCarplayPlugin.rootViewController = rootViewController
             // Remove the dashboard window's root view controller if the scene is active
             dashboardWindow?.rootViewController = nil
-            window.rootViewController = rootViewController
+            // show screen directly after opening CarPlay app
+            DispatchQueue.main.async {
+                window.rootViewController = rootViewController
+            }
         }
 
         // Update the root template
