@@ -108,11 +108,8 @@ class FCPMapViewController: UIViewController, CLLocationManagerDelegate {
 
     // MARK: - View Lifecycle
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
         mapLoadedOnce = false
 
         // Load the map scene using a map scheme to render the map with.
@@ -141,6 +138,17 @@ class FCPMapViewController: UIViewController, CLLocationManagerDelegate {
         super.viewDidAppear(animated)
 
         updateCameraPrincipalPoint()
+    }
+
+    /// View will disappear
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+
+        // Clean up handlers
+        updateMapCoordinatesHandler = nil
+        recenterMapViewHandler = nil
+        locationUpdatedHandler = nil
+        toggleSatelliteViewHandler = nil
     }
 
     /// View safe area insets
